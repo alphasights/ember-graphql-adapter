@@ -9,5 +9,10 @@ test("takes an Model and responds with GraphQL query", function(assert) {
     status: DS.attr('string')
   });
 
-  assert.equal(Compiler.compile(model), "query projectQuery { projects { id  status } } ");
+  let query = {
+    status: 'active',
+    limit: 10
+  };
+
+  assert.equal(Compiler.compile(model, query), 'query projectQuery { projects(status: "active", limit: 10) { id  status } } ');
 });
