@@ -1,6 +1,7 @@
 import { test, module } from 'qunit';
 import Parser from 'graphql-adapter/parser';
 import * as Type from 'graphql-adapter/types';
+import ArgumentSet from 'graphql-adapter/types/argument-set';
 import DS from 'ember-data';
 
 module('unit:graphql-adapter/parser', {
@@ -10,12 +11,10 @@ module('unit:graphql-adapter/parser', {
       name: DS.attr('string')
     });
 
-    let operationType = 'query';
-    let operationName = 'projectsQuery';
-    let fieldName = 'projects';
-    let fieldQuery = { status: 'active' };
+    let rootField = new Type.Field('projects');
+    let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
 
-    this.parseTree = Parser.parse(model, operationType, operationName, fieldName, fieldQuery);
+    this.parseTree = Parser.parse(model, operation, rootField);
   }
 });
 
