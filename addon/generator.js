@@ -4,6 +4,13 @@ export default function Generator() {}
 
 Generator.openingToken = '{';
 Generator.closingToken = '}';
+
+Generator.argumentSetOpeningToken = '(';
+Generator.argumentSetClosingToken = ')';
+Generator.argumentKeyValueSeparateToken = ': ';
+Generator.argumentStringWrapperToken = '"';
+Generator.argumentSeparatorToken = ', ';
+
 Generator.separatorToken = ' ';
 
 Generator.generate = function(parseTree) {
@@ -20,10 +27,16 @@ Generator.closeOperation = function(acc) {
 };
 
 Generator.generateField = function(field, injectId) {
-  let acc = this.separatorToken + field.name + this.separatorToken;
+  let acc = this.separatorToken + field.name;
   injectId = injectId === false ? false : true;
 
-  if (field.selectionSet != null) {
+  if (field.argumentSet.length > 0) {
+    acc = this.generateArgumentSet(field.argumentSet, acc);
+  }
+
+  acc = acc + this.separatorToken;
+
+  if (field.selectionSet.length > 0) {
     acc = this.generateSelectionSet(field.selectionSet, acc, injectId);
   }
 
@@ -43,4 +56,21 @@ Generator.generateSelectionSet = function(set, acc, injectId) {
   });
 
   return acc + this.closingToken + this.separatorToken;
+};
+
+Generator.generateArgumentSet = function(set, acc) {
+  acc = acc + this.argumentSetOpeningToken;
+
+  acc = acc + set.map((argument) => {
+    let value;
+    if (typeof(argument.value) === 'string') {
+      value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
+    } else {
+      value = argument.value;
+    }
+
+    return argument.name + this.argumentKeyValueSeparateToken + value;
+  }).join(this.argumentSeparatorToken);
+
+  return acc + this.argumentSetClosingToken;
 };
