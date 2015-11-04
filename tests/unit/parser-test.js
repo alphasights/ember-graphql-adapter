@@ -7,7 +7,7 @@ module('unit:graphql-adapter/parser', {
   setup: function() {
     let model = DS.Model.extend({
       status: DS.attr('string'),
-      name: DS.attr('string'),
+      name: DS.attr('string')
     });
 
     let operationType = 'query';
@@ -33,8 +33,12 @@ test('root field is generated in the selection set', function(assert){
   let rootField = this.parseTree.selectionSet[0];
   assert.equal(rootField instanceof Type.Field, true);
   assert.equal(rootField.name, 'projects');
+});
 
+test('there are as many elements in the selection set as there are top level fields', function(assert){
+  let rootField = this.parseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
+
   assert.equal(projectsSelectionSet.length, 2);
 });
 
