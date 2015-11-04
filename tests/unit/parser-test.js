@@ -3,42 +3,48 @@ import Parser from 'graphql-adapter/parser';
 import * as Type from 'graphql-adapter/types';
 import DS from 'ember-data';
 
-module('unit:graphql-adapter/parser');
+module('unit:graphql-adapter/parser', {
+  setup: function() {
+    let model = DS.Model.extend({
+      status: DS.attr('string'),
+      name: DS.attr('string'),
+    });
 
-test('parsing a model', function(assert) {
-  let model = DS.Model.extend({
-    status: DS.attr('string'),
-    name: DS.attr('string'),
-  });
+    let operationType = 'query';
+    let operationName = 'projectsQuery';
+    let fieldName = 'projects';
 
-  let operationType = 'query';
-  let operationName = 'projectsQuery';
-  let fieldName = 'projects';
+    this.parseTree = Parser.parse(model, operationType, operationName, fieldName);
+  }
+});
 
-  let parseTree = Parser.parse(model, operationType, operationName, fieldName);
+test('makes the root of the tree an Operation', function(assert) {
+  assert.equal(this.parseTree instanceof Type.Operation, true);
+  assert.equal(this.parseTree.type, 'query');
+  assert.equal(this.parseTree.name, 'projectsQuery');
 
-  assert.equal(parseTree instanceof Type.Operation, true);
-  assert.equal(parseTree.type, operationType);
-  assert.equal(parseTree.name, operationName);
-
-  let rootSelectionSet = parseTree.selectionSet;
+  let rootSelectionSet = this.parseTree.selectionSet;
   assert.equal(rootSelectionSet instanceof Type.SelectionSet, true);
   assert.equal(rootSelectionSet.length, 1);
+});
 
-  let rootField = rootSelectionSet[0];
+test('root field is generated in the selection set', function(assert){
+  let rootField = this.parseTree.selectionSet[0];
   assert.equal(rootField instanceof Type.Field, true);
-  assert.equal(rootField.name, fieldName);
+  assert.equal(rootField.name, 'projects');
 
   let projectsSelectionSet = rootField.selectionSet;
   assert.equal(projectsSelectionSet.length, 2);
+});
 
+test('nested fields are generated in the root field selection set', function(assert){
+  let rootField = this.parseTree.selectionSet[0];
+  let projectsSelectionSet = rootField.selectionSet;
   let expectedStatusField = projectsSelectionSet[0];
   assert.equal(expectedStatusField instanceof Type.Field, true);
   assert.equal(expectedStatusField.name, 'status');
-  assert.equal(expectedStatusField.selectionSet, null);
 
   let expectedNameField = projectsSelectionSet[1];
   assert.equal(expectedNameField instanceof Type.Field, true);
   assert.equal(expectedNameField.name, 'name');
-  assert.equal(expectedNameField.selectionSet, null);
 });
