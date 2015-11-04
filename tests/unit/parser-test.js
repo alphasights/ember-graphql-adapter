@@ -13,8 +13,9 @@ module('unit:graphql-adapter/parser', {
     let operationType = 'query';
     let operationName = 'projectsQuery';
     let fieldName = 'projects';
+    let fieldQuery = { status: 'active' };
 
-    this.parseTree = Parser.parse(model, operationType, operationName, fieldName);
+    this.parseTree = Parser.parse(model, operationType, operationName, fieldName, fieldQuery);
   }
 });
 

@@ -2,10 +2,16 @@ import * as Type from 'graphql-adapter/types';
 
 export default function Parser() {}
 
-Parser.parse = function(model, operationType, operationName, fieldName) {
-  let rootField = new Type.Field(fieldName);
+Parser.parse = function(model, operationType, operationName, fieldName, fieldQuery) {
+  let rootFieldArgumentSet = new Type.ArgumentSet();
+
+  Object.keys(fieldQuery).forEach((key) => {
+    rootFieldArgumentSet.push(new Type.Argument(key, fieldQuery[key]));
+  });
+
+  let rootField = new Type.Field(fieldName, rootFieldArgumentSet);
   let rootSet = new Type.SelectionSet(rootField);
-  let argumentSet = new Type.ArgumentSet();
+  let operationArgumentSet = new Type.ArgumentSet();
 
   model.eachAttribute(function(attr) {
     let field = new Type.Field(attr);
@@ -13,5 +19,5 @@ Parser.parse = function(model, operationType, operationName, fieldName) {
     rootField.selectionSet.push(field);
   });
 
-  return new Type.Operation(operationType, operationName, argumentSet, rootSet);
+  return new Type.Operation(operationType, operationName, operationArgumentSet, rootSet);
 };
