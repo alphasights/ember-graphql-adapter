@@ -2,19 +2,19 @@ import { test, module } from 'qunit';
 import Parser from 'graphql-adapter/parser';
 import * as Type from 'graphql-adapter/types';
 import ArgumentSet from 'graphql-adapter/types/argument-set';
-import DS from 'ember-data';
+import ModelDouble from '../helpers/model-double';
+import StoreDouble from '../helpers/store-double';
 
 module('unit:graphql-adapter/parser', {
   setup: function() {
-    let model = DS.Model.extend({
-      status: DS.attr('string'),
-      name: DS.attr('string')
-    });
+    let projectModel = new ModelDouble('projects', ['status', 'name'], ['user']);
+    let userModel = new ModelDouble('user', ['name']);
+    let store = new StoreDouble({ 'project': projectModel, 'user': userModel });
 
     let rootField = new Type.Field('projects');
     let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
 
-    this.parseTree = Parser.parse(model, operation, rootField);
+    this.parseTree = Parser.parse(projectModel, store, operation, rootField);
   }
 });
 
@@ -38,7 +38,7 @@ test('there are as many elements in the selection set as there are top level fie
   let rootField = this.parseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
 
-  assert.equal(projectsSelectionSet.length, 2);
+  assert.equal(projectsSelectionSet.length, 3);
 });
 
 test('nested fields are generated in the root field selection set', function(assert){
@@ -51,4 +51,8 @@ test('nested fields are generated in the root field selection set', function(ass
   let expectedNameField = projectsSelectionSet[1];
   assert.equal(expectedNameField instanceof Type.Field, true);
   assert.equal(expectedNameField.name, 'name');
+
+  let expectedAuthorField = projectsSelectionSet[2];
+  assert.equal(expectedAuthorField instanceof Type.Field, true);
+  assert.equal(expectedAuthorField.name, 'user');
 });

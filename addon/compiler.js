@@ -5,10 +5,10 @@ import { Field, Operation } from 'graphql-adapter/types';
 
 export default function Compiler() {}
 
-Compiler.compile = function(model, rootFieldQuery) {
-  let rootField = new Field('projects', ArgumentSet.fromQuery(rootFieldQuery));
-  let operation = new Operation('query', 'projectQuery');
-  let parseTree = Parser.parse(model, operation, rootField);
+Compiler.compile = function(model, store, rootFieldQuery) {
+  let rootField = new Field(model.modelName, ArgumentSet.fromQuery(rootFieldQuery));
+  let operation = new Operation('query', model.modelName + 'Query');
+  let parseTree = Parser.parse(model, store, operation, rootField);
 
   return Generator.generate(parseTree);
 };
