@@ -6,12 +6,15 @@ import Compiler from 'graphql-adapter/compiler';
 module('unit:graphql-adapter/compiler');
 
 test("takes an Model and responds with GraphQL query", function(assert) {
-  let model = new ModelDouble('projects', ['status']);
-  let store = new StoreDouble({ 'projects': model });
-  let query = {
-    status: 'active',
-    limit: 10
+  let model = new ModelDouble('project', ['status']);
+  let store = new StoreDouble({ 'project': model });
+  let options = {
+    'rootFieldName': 'projects',
+    'rootFieldQuery': {
+      'status': 'active',
+      'limit': 10
+    }
   };
 
-  assert.equal(Compiler.compile(model, store, query), 'query projectsQuery { projects(status: "active", limit: 10) { id  status } } ');
+  assert.equal(Compiler.compile(model, store, options), 'query projectsQuery { projects(status: "active", limit: 10) { id  status } } ');
 });
