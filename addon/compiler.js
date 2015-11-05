@@ -5,9 +5,13 @@ import { Field, Operation } from 'graphql-adapter/types';
 
 export default function Compiler() {}
 
-Compiler.compile = function(model, store, rootFieldQuery) {
-  let rootField = new Field(model.modelName, ArgumentSet.fromQuery(rootFieldQuery));
-  let operation = new Operation('query', model.modelName + 'Query');
+Compiler.compile = function(model, store, options) {
+  options = options || {};
+  let rootFieldQuery = options['rootFieldQuery'] || {};
+  let rootFieldName = options['rootFieldName'] || model.modelName;
+
+  let rootField = new Field(rootFieldName, ArgumentSet.fromQuery(rootFieldQuery));
+  let operation = new Operation('query', rootFieldName + 'Query');
   let parseTree = Parser.parse(model, store, operation, rootField);
 
   return Generator.generate(parseTree);
