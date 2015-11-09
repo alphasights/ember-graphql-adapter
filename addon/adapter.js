@@ -96,7 +96,7 @@ export default DS.Adapter.extend({
       ajaxOpts.success = function(payload, textStatus, jqXHR) {
         let response;
 
-        if (!(response instanceof DS.AdapterError.constructor)) {
+        if (!(response instanceof DS.AdapterError)) {
           response = adapter.handleResponse(
             jqXHR.status,
             parseResponseHeaders(jqXHR.getAllResponseHeaders()),
@@ -105,7 +105,7 @@ export default DS.Adapter.extend({
           );
         }
 
-        if (response instanceof DS.AdapterError.constructor) {
+        if (response instanceof DS.AdapterError) {
           Ember.run(null, reject, response);
         } else {
           Ember.run(null, resolve, response);
@@ -186,14 +186,10 @@ export default DS.Adapter.extend({
      @return {Object | DS.AdapterError} response
   */
   handleResponse: function(status, headers, payload, options) {
-    if (status === 200) {
-      if (payload['errors']) {
-        return new DS.AdapterError(payload['errors']);
-      } else {
-        return payload['data'][options.rootFieldName];
-      }
-    } else if (this.isInvalid(status, headers, payload)) {
-      return new DS.InvalidError(payload.errors);
+    if (payload['errors']) {
+      return new DS.InvalidError(payload['errors'].map((error) => { return error.message }));
+    } else {
+      return payload['data'][options.rootFieldName];
     }
   },
 });
