@@ -34,25 +34,44 @@ test('root field is generated in the selection set', function(assert){
   assert.equal(rootField.name, 'projects');
 });
 
-test('there are as many elements in the selection set as there are top level fields', function(assert){
+test('there are as many elements in the selection set as there are top level fields (plus the id field)', function(assert){
   let rootField = this.parseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
 
-  assert.equal(projectsSelectionSet.length, 3);
+  assert.equal(projectsSelectionSet.length, 4);
 });
 
 test('nested fields are generated in the root field selection set', function(assert){
   let rootField = this.parseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
-  let expectedStatusField = projectsSelectionSet[0];
+
+  let expectedIdField = projectsSelectionSet[0];
+  assert.equal(expectedIdField instanceof Type.Field, true);
+  assert.equal(expectedIdField.name, 'id');
+
+  let expectedStatusField = projectsSelectionSet[1];
   assert.equal(expectedStatusField instanceof Type.Field, true);
   assert.equal(expectedStatusField.name, 'status');
 
-  let expectedNameField = projectsSelectionSet[1];
+  let expectedNameField = projectsSelectionSet[2];
   assert.equal(expectedNameField instanceof Type.Field, true);
   assert.equal(expectedNameField.name, 'name');
 
-  let expectedAuthorField = projectsSelectionSet[2];
-  assert.equal(expectedAuthorField instanceof Type.Field, true);
-  assert.equal(expectedAuthorField.name, 'user');
+  let expectedUserField = projectsSelectionSet[3];
+  assert.equal(expectedUserField instanceof Type.Field, true);
+  assert.equal(expectedUserField.name, 'user');
+});
+
+test('belongsTo id injection', function(assert) {
+  let rootField = this.parseTree.selectionSet[0];
+  let projectsSelectionSet = rootField.selectionSet;
+  let expectedUserField = projectsSelectionSet[3];
+
+  let expectedUserIdField = expectedUserField.selectionSet[0];
+  assert.equal(expectedUserIdField instanceof Type.Field, true);
+  assert.equal(expectedUserIdField.name, 'id');
+
+  let expectedUserNameField = expectedUserField.selectionSet[1];
+  assert.equal(expectedUserNameField instanceof Type.Field, true);
+  assert.equal(expectedUserNameField.name, 'name');
 });
