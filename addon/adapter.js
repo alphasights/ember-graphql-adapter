@@ -22,9 +22,13 @@ export default DS.Adapter.extend({
      @return {Promise} promise)rser
   */
   query: function(store, type, query) {
+    let operationName = Ember.String.pluralize(type.modelName);
+
     return this.request(store, type, {
-      'rootFieldName':  Ember.String.pluralize(type.modelName),
+      'rootFieldName': operationName,
       'rootFieldQuery': query,
+      'operationType': 'query',
+      'operationName': operationName,
     });
   },
 
@@ -37,8 +41,12 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
+    let operationName = Ember.String.pluralize(type.modelName);
+
     let options = {
-      'rootFieldName': Ember.String.pluralize(type.modelName),
+      'rootFieldName': operationName,
+      'operationName': operationName,
+      'operationType': 'query',
     };
 
     return this.request(store, type, options);
@@ -55,6 +63,8 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'rootFieldQuery': { 'id': id },
       'rootFieldName': type.modelName,
+      'operationType': 'query',
+      'operationName': type.modelName
     });
   },
 

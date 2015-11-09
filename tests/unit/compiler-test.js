@@ -9,6 +9,8 @@ test("takes an Model and responds with GraphQL query", function(assert) {
   let model = new ModelDouble('project', ['status']);
   let store = new StoreDouble({ 'project': model });
   let options = {
+    'operationType': 'query',
+    'operationName': 'projectsQuery',
     'rootFieldName': 'projects',
     'rootFieldQuery': {
       'status': 'active',
