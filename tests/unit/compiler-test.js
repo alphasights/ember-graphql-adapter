@@ -20,3 +20,19 @@ test("takes an Model and responds with GraphQL query", function(assert) {
 
   assert.equal(Compiler.compile(model, store, options), 'query projectsQuery { projects(status: "active", limit: 10) { id  status } } ');
 });
+
+test("mutation", function(assert){
+  let model = new ModelDouble('project', ['name', 'status']);
+  let store = new StoreDouble({ 'project': model });
+  let options = {
+    'operationType': 'mutation',
+    'operationName': 'projectCreate',
+    'rootFieldName': 'projectCreate',
+    'rootFieldQuery': {
+      'name': 'Test Project',
+      'status': 'active'
+    }
+  };
+
+  assert.equal(Compiler.compile(model, store, options), 'mutation projectCreate { projectCreate(name: "Test Project", status: "active") { id  name  status } } ');
+});
