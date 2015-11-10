@@ -5,6 +5,7 @@ import Compiler from './compiler';
 export default DS.Adapter.extend({
   endpoint: null,
   param: "query",
+  coalesceFindRequests: true,
 
   /**
      Called by the store in order to fetch JSON for
@@ -66,6 +67,23 @@ export default DS.Adapter.extend({
       'operationType': 'query',
       'operationName': type.modelName
     });
+  },
+
+  findMany: function(store, type, ids, snapshots) {
+    console.log(arguments);
+    let operationName = Ember.String.pluralize(type.modelName);
+
+    return this.request(store, type, {
+      'rootFieldQuery': { 'ids': ids },
+      'rootFieldName': operationName,
+      'operationType': 'query',
+      'operationName': operationName
+    });
+  },
+
+  groupRecordsForFindMany: function(store, snapshots) {
+    console.log(snapshots);
+    return [snapshots];
   },
 
   buildUrl:  function(compiledQuery) {
