@@ -1,4 +1,5 @@
 import DS from 'ember-data';
+import Ember from 'ember';
 
 export default DS.JSONAPISerializer.extend({
   extractId: function(modelClass, resourceHash) {
@@ -10,15 +11,28 @@ export default DS.JSONAPISerializer.extend({
   },
 
   extractAttributes: function(modelClass, resourceHash) {
-    let attributes = resourceHash[modelClass.modelName];
-    let nonIdAttributes = {};
-    let nonIdKeys = Object.keys(attributes).filter((attr) => { return attr !== 'id'; });
-    nonIdKeys.forEach((key) => { nonIdAttributes[this.keyForAttribute(key)] = attributes[key]; });
+    let attributes = {};
 
-    return nonIdAttributes;
+    modelClass.eachAttribute((key) => {
+      attributes[this.keyForAttribute(key)] = resourceHash[modelClass.modelName][key];
+    });
+
+    return attributes;
   },
 
-  extractRelationships: function() {
-    return {};
+  extractRelationships: function(modelClass, resourceHash) {
+    let relationships = {};
+
+    modelClass.eachRelationship((key) => {
+      let relHash = resourceHash[modelClass.modelName][key];
+      relationships[this.keyForRelationship(key)] = {
+        'data': {
+          'id': relHash['id'],
+          'type': Ember.String.singularize(key)
+        }
+      };
+    });
+
+    return relationships;
   }
 });
