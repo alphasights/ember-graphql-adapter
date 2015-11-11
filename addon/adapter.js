@@ -76,6 +76,33 @@ export default DS.Adapter.extend({
     return Compiler.compile(type, store, options);
   },
 
+  createRecord: function(store, type, snapshot) {
+    var data = {};
+    var serializer = store.serializerFor(type.modelName);
+
+    serializer.serializeIntoHash(data, type, snapshot);
+
+    return this.request(store, type, {
+      'rootFieldQuery': data[type.modelName],
+      'rootFieldAlias': type.modelName,
+      'rootFieldName': type.modelName + 'Create',
+      'operationType': 'mutation',
+      'operationName': type.modelName + 'Create'
+    });
+  },
+
+  deleteRecord: function(store, type, snapshot) {
+    let data = this.serialize(snapshot, { includeId: true });
+
+    return this.request(store, type, {
+      'rootFieldName': type.modelName + 'Delete',
+      'rootFieldAlias': type.modelName,
+      'rootFieldQuery': { 'id': data.id },
+      'operationType': 'mutation',
+      'operationName': type.modelName + 'Delete'
+    });
+  },
+
   /**
      @method request
      @private
