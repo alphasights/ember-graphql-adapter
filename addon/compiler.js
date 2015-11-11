@@ -7,11 +7,15 @@ export default function Compiler() {}
 
 Compiler.compile = function(model, store, options) {
   options = options || {};
+  let operationType = options['operationType']; // TODO: Must be query or mutation
+  let operationName = options['operationName'];
+  let operation = new Operation(operationType, operationName);
+
   let rootFieldQuery = options['rootFieldQuery'] || {};
   let rootFieldName = options['rootFieldName'] || model.modelName;
+  let rootFieldAlias = options['rootFieldAlias'];
+  let rootField = new Field(rootFieldName, rootFieldAlias, ArgumentSet.fromQuery(rootFieldQuery));
 
-  let rootField = new Field(rootFieldName, ArgumentSet.fromQuery(rootFieldQuery));
-  let operation = new Operation('query', rootFieldName + 'Query');
   let parseTree = Parser.parse(model, store, operation, rootField);
 
   return Generator.generate(parseTree);

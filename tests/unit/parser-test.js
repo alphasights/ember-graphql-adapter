@@ -67,6 +67,8 @@ test('belongsTo id injection', function(assert) {
   let projectsSelectionSet = rootField.selectionSet;
   let expectedUserField = projectsSelectionSet[3];
 
+  assert.equal(expectedUserField.selectionSet.length, 2);
+
   let expectedUserIdField = expectedUserField.selectionSet[0];
   assert.equal(expectedUserIdField instanceof Type.Field, true);
   assert.equal(expectedUserIdField.name, 'id');

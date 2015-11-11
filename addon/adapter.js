@@ -22,9 +22,13 @@ export default DS.Adapter.extend({
      @return {Promise} promise)rser
   */
   query: function(store, type, query) {
+    let operationName = Ember.String.pluralize(type.modelName);
+
     return this.request(store, type, {
-      'rootFieldName':  Ember.String.pluralize(type.modelName),
+      'rootFieldName': operationName,
       'rootFieldQuery': query,
+      'operationType': 'query',
+      'operationName': operationName
     });
   },
 
@@ -37,8 +41,12 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
+    let operationName = Ember.String.pluralize(type.modelName);
+
     let options = {
-      'rootFieldName': Ember.String.pluralize(type.modelName),
+      'rootFieldName': operationName,
+      'operationName': operationName,
+      'operationType': 'query'
     };
 
     return this.request(store, type, options);
@@ -55,6 +63,8 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'rootFieldQuery': { 'id': id },
       'rootFieldName': type.modelName,
+      'operationType': 'query',
+      'operationName': type.modelName
     });
   },
 
@@ -64,6 +74,33 @@ export default DS.Adapter.extend({
 
   compile: function(store, type, options) {
     return Compiler.compile(type, store, options);
+  },
+
+  createRecord: function(store, type, snapshot) {
+    var data = {};
+    var serializer = store.serializerFor(type.modelName);
+
+    serializer.serializeIntoHash(data, type, snapshot);
+
+    return this.request(store, type, {
+      'rootFieldQuery': data[type.modelName],
+      'rootFieldAlias': type.modelName,
+      'rootFieldName': type.modelName + 'Create',
+      'operationType': 'mutation',
+      'operationName': type.modelName + 'Create'
+    });
+  },
+
+  deleteRecord: function(store, type, snapshot) {
+    let data = this.serialize(snapshot, { includeId: true });
+
+    return this.request(store, type, {
+      'rootFieldName': type.modelName + 'Delete',
+      'rootFieldAlias': type.modelName,
+      'rootFieldQuery': { 'id': data.id },
+      'operationType': 'mutation',
+      'operationName': type.modelName + 'Delete'
+    });
   },
 
   /**
@@ -86,7 +123,7 @@ export default DS.Adapter.extend({
       ajaxOpts.success = function(payload, textStatus, jqXHR) {
         let response;
 
-        if (!(response instanceof DS.AdapterError.constructor)) {
+        if (!(response instanceof DS.AdapterError)) {
           response = adapter.handleResponse(
             jqXHR.status,
             parseResponseHeaders(jqXHR.getAllResponseHeaders()),
@@ -95,7 +132,7 @@ export default DS.Adapter.extend({
           );
         }
 
-        if (response instanceof DS.AdapterError.constructor) {
+        if (response instanceof DS.AdapterError) {
           Ember.run(null, reject, response);
         } else {
           Ember.run(null, resolve, response);
@@ -175,15 +212,11 @@ export default DS.Adapter.extend({
      @param  {Object} options
      @return {Object | DS.AdapterError} response
   */
-  handleResponse: function(status, headers, payload, options) {
-    if (status === 200) {
-      if (payload['errors']) {
-        return new DS.AdapterError(payload['errors']);
-      } else {
-        return payload['data'][options.rootFieldName];
-      }
-    } else if (this.isInvalid(status, headers, payload)) {
-      return new DS.InvalidError(payload.errors);
+  handleResponse: function(status, headers, payload) {
+    if (payload['errors']) {
+      return new DS.InvalidError(payload['errors'].map((error) => { return error.message; }));
+    } else {
+      return payload['data'];
     }
   },
 });
