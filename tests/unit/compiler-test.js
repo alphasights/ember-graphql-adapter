@@ -36,3 +36,20 @@ test("mutation", function(assert){
 
   assert.equal(Compiler.compile(model, store, options), 'mutation projectCreate { projectCreate(name: "Test Project", status: "active") { id  name  status } } ');
 });
+
+test("mutation with root alias", function(assert){
+  let model = new ModelDouble('project', ['name', 'status']);
+  let store = new StoreDouble({ 'project': model });
+  let options = {
+    'operationType': 'mutation',
+    'operationName': 'projectCreate',
+    'rootFieldName': 'projectCreate',
+    'rootFieldAlias': 'project',
+    'rootFieldQuery': {
+      'name': 'Test Project',
+      'status': 'active'
+    }
+  };
+
+  assert.equal(Compiler.compile(model, store, options), 'mutation projectCreate { project: projectCreate(name: "Test Project", status: "active") { id  name  status } } ');
+});

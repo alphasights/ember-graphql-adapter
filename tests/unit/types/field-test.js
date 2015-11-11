@@ -6,9 +6,10 @@ module('unit:graphql-adapter/types/field');
 test('can be constructed', function(assert) {
   let selectionSet = new SelectionSet();
   let argumentSet = new ArgumentSet();
-  let field = new Field('projects', argumentSet, selectionSet);
+  let field = new Field('projects', 'projectsAlias', argumentSet, selectionSet);
 
   assert.equal(field.name, 'projects');
+  assert.equal(field.alias, 'projectsAlias');
   assert.equal(field.argumentSet, argumentSet);
   assert.equal(field.selectionSet, selectionSet);
 });
@@ -17,6 +18,7 @@ test('if no argument or selection sets are provided, they default to new empty s
   let field = new Field('projects');
 
   assert.equal(field.name, 'projects');
+  assert.equal(field.alias, null);
 
   assert.equal(field.argumentSet instanceof ArgumentSet, true);
   assert.equal(field.argumentSet.length, 0);

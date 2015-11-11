@@ -15,7 +15,7 @@ Parser.parse = function(model, store, operation, rootField) {
 
   model.eachRelationship((rel) => {
     let relModel = this.store.modelFor(rel);
-    let field = new Type.Field(rel, new Type.ArgumentSet(), new Type.SelectionSet(new Type.Field('id')));
+    let field = new Type.Field(rel, null, new Type.ArgumentSet(), new Type.SelectionSet(new Type.Field('id')));
 
     relModel.eachAttribute(function(attr) {
       let relField = new Type.Field(attr);

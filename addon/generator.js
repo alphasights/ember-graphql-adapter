@@ -3,6 +3,8 @@ export default function Generator() {}
 Generator.openingToken = '{';
 Generator.closingToken = '}';
 
+Generator.aliasSeparatorToken = ': ';
+
 Generator.argumentSetOpeningToken = '(';
 Generator.argumentSetClosingToken = ')';
 Generator.argumentKeyValueSeparateToken = ': ';
@@ -11,13 +13,15 @@ Generator.argumentSeparatorToken = ', ';
 
 Generator.separatorToken = ' ';
 
+Generator.emptyToken = '';
+
 Generator.generate = function(parseTree) {
   return this.openOperation(parseTree);
 };
 
 Generator.openOperation = function(operation) {
   let acc = operation.type;
-  return acc + this.generateField(operation, false);
+  return acc + this.generateField(operation);
 };
 
 Generator.closeOperation = function(acc) {
@@ -25,7 +29,13 @@ Generator.closeOperation = function(acc) {
 };
 
 Generator.generateField = function(field) {
-  let acc = this.separatorToken + field.name;
+  let acc = this.separatorToken;
+
+  if (field.alias) {
+    acc = acc + field.alias + this.aliasSeparatorToken;
+  }
+
+  acc = acc + field.name;
 
   if (field.argumentSet.length > 0) {
     acc = this.generateArgumentSet(field.argumentSet, acc);

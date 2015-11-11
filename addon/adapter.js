@@ -28,7 +28,7 @@ export default DS.Adapter.extend({
       'rootFieldName': operationName,
       'rootFieldQuery': query,
       'operationType': 'query',
-      'operationName': operationName,
+      'operationName': operationName
     });
   },
 
@@ -46,7 +46,7 @@ export default DS.Adapter.extend({
     let options = {
       'rootFieldName': operationName,
       'operationName': operationName,
-      'operationType': 'query',
+      'operationType': 'query'
     };
 
     return this.request(store, type, options);
@@ -185,11 +185,11 @@ export default DS.Adapter.extend({
      @param  {Object} options
      @return {Object | DS.AdapterError} response
   */
-  handleResponse: function(status, headers, payload, options) {
+  handleResponse: function(status, headers, payload) {
     if (payload['errors']) {
-      return new DS.InvalidError(payload['errors'].map((error) => { return error.message }));
+      return new DS.InvalidError(payload['errors'].map((error) => { return error.message; }));
     } else {
-      return payload['data'][options.rootFieldName];
+      return payload['data'];
     }
   },
 });
