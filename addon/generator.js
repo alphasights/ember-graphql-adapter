@@ -1,3 +1,6 @@
+import * as Type from 'graphql-adapter/types';
+import Ember from 'ember';
+
 export default function Generator() {}
 
 Generator.openingToken = '{';
@@ -38,7 +41,9 @@ Generator.generateField = function(field) {
   acc = acc + field.name;
 
   if (field.argumentSet.length > 0) {
+    acc = acc + this.argumentSetOpeningToken;
     acc = this.generateArgumentSet(field.argumentSet, acc);
+    acc = acc + this.argumentSetClosingToken;
   }
 
   acc = acc + this.separatorToken;
@@ -61,18 +66,22 @@ Generator.generateSelectionSet = function(set, acc) {
 };
 
 Generator.generateArgumentSet = function(set, acc) {
-  acc = acc + this.argumentSetOpeningToken;
-
   acc = acc + set.map((argument) => {
-    let value;
-    if (typeof(argument.value) === 'string') {
-      value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
-    } else {
-      value = argument.value;
-    }
-
-    return argument.name + this.argumentKeyValueSeparateToken + value;
+    return this.generateArgument(argument);
   }).join(this.argumentSeparatorToken);
 
-  return acc + this.argumentSetClosingToken;
+  return acc;
+};
+
+Generator.generateArgument = function(argument) {
+  let value;
+  if (Ember.typeOf(argument.value) === 'string') {
+    value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
+  } else if (Ember.typeOf(argument.value) === 'object') {
+    value = this.generateArgumentSet(argument.value, "{ ") + " }";
+  } else {
+    value = argument.value;
+  }
+
+  return argument.name + this.argumentKeyValueSeparateToken + value;
 };

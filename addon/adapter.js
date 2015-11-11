@@ -5,6 +5,8 @@ import Compiler from './compiler';
 export default DS.Adapter.extend({
   endpoint: null,
   param: "query",
+  defaultSerializer: 'graphql-adapter/serializer',
+  coalesceFindRequests: true,
 
   /**
      Called by the store in order to fetch JSON for
@@ -68,10 +70,6 @@ export default DS.Adapter.extend({
     });
   },
 
-  buildUrl:  function(compiledQuery) {
-    return this.endpoint + '?' + this.param + '=' + compiledQuery;
-  },
-
   compile: function(store, type, options) {
     return Compiler.compile(type, store, options);
   },
@@ -115,10 +113,10 @@ export default DS.Adapter.extend({
     let adapter = this;
 
     let compiledQuery = this.compile(store, type, options);
-    let url = this.buildUrl(compiledQuery);
+    let url = this.endpoint;
 
     return new Ember.RSVP.Promise(function(resolve, reject) {
-      let ajaxOpts = adapter.ajaxOptions(url);
+      let ajaxOpts = adapter.ajaxOptions(url, { query: compiledQuery });
 
       ajaxOpts.success = function(payload, textStatus, jqXHR) {
         let response;
@@ -172,10 +170,11 @@ export default DS.Adapter.extend({
      @param {String} url
      @return {Object}
   */
-  ajaxOptions: function(url) {
+  ajaxOptions: function(url, data) {
     let opts =  {
       'url': url,
       'dataType': 'json',
+      'data': data,
       'type': 'GET',
       'context': this
     };
@@ -216,7 +215,7 @@ export default DS.Adapter.extend({
     if (payload['errors']) {
       return new DS.InvalidError(payload['errors'].map((error) => { return error.message; }));
     } else {
-      return payload['data'];
+      return payload;
     }
   },
 });

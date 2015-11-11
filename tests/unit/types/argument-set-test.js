@@ -39,3 +39,15 @@ test("it can be made from a query", function(assert) {
   assert.equal(set[1].name, 'limit');
   assert.equal(set[1].value, 10);
 });
+
+test("it can be made from a nested query", function(assert) {
+  let set = ArgumentSet.fromQuery({ project: { id: 1 }, limit: 10 });
+
+  assert.equal(set.length, 2);
+  assert.equal(set[0].name, 'project');
+  assert.equal(set[0].value instanceof ArgumentSet, true);
+  assert.equal(set[0].value[0].name, 'id');
+  assert.equal(set[0].value[0].value, 1);
+  assert.equal(set[1].name, 'limit');
+  assert.equal(set[1].value, 10);
+});
