@@ -2,6 +2,58 @@ import DS from 'ember-data';
 import Ember from 'ember';
 
 export default DS.JSONAPISerializer.extend({
+  serialize: function(snapshot) {
+    let data = {};
+    snapshot.eachAttribute((key, attribute) => {
+      this.__serializeAttribute(snapshot, data, key, attribute);
+    });
+
+    snapshot.eachRelationship((key, relationship) => {
+      if (relationship.kind === 'belongsTo') {
+        this.__serializeBelongsTo(snapshot, data, relationship);
+      } else if (relationship.kind === 'hasMany') {
+        this.__serializeHasMany(snapshot, data, relationship);
+      }
+    });
+
+    return data;
+  },
+
+  __serializeBelongsTo: function(snapshot, data, relationship) {
+    var key = relationship.key;
+
+    if (this._canSerialize(key)) {
+      var belongsTo = snapshot.belongsTo(key);
+
+      if (belongsTo !== undefined) {
+        var payloadKey = this._getMappedKey(key);
+        if (payloadKey === key) {
+          payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
+        }
+
+        data[payloadKey + '_id'] = belongsTo.id;
+      }
+    }
+  },
+
+  __serializeAttribute: function(snapshot, data, key, attribute) {
+    let type = attribute.type;
+    let value = snapshot.attr(key);
+
+    if (this._canSerialize(key)) {
+      if (type) {
+        let transform = this.transformFor(type);
+        value = transform.serialize(value);
+      }
+      var payloadKey =  this._getMappedKey(key);
+      if (payloadKey === key) {
+        payloadKey = this.keyForAttribute(key, 'serialize');
+      }
+
+      data[payloadKey] = value;
+    }
+  },
+
   normalizeResponse: function(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
     const documentHash = { 'data': [], 'included': [] };

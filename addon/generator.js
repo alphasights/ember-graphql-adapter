@@ -1,4 +1,3 @@
-import * as Type from 'graphql-adapter/types';
 import Ember from 'ember';
 
 export default function Generator() {}

@@ -2,7 +2,8 @@ import { test, module } from 'qunit';
 import Serializer from 'graphql-adapter/serializer';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
-import DS from 'ember-data';
+import ContainerDouble from '../helpers/container-double';
+import SnapshotDouble from '../helpers/snapshot-double';
 
 module('unit:graphql-adapter/serializer');
 
@@ -134,4 +135,29 @@ test('normalizing with relationships', function(assert) {
   };
 
   assert.deepEqual(serializer.normalizeResponse(store, postModel, payload, '1', 'findRecord'), expectedNormalization);
+});
+
+
+test("serializes json api style data to a query usable as an ArgumentSet", function(assert) {
+  let serializer = new Serializer();
+  serializer.container = new ContainerDouble({
+    'transform:string': { serialize: function(v) { return v; } }
+  });
+
+  let expected = {
+    'title': 'The title',
+    'body': 'The body',
+    'author_id': '1'
+  };
+
+  let projectAttrs = {
+    title: 'The title',
+    body: 'The body'
+  };
+
+  let projectRels = {
+    author: { kind: 'belongsTo', key: 'author', data: { id: '1', modelName: 'user' } }
+  };
+
+  assert.deepEqual(serializer.serialize(new SnapshotDouble('project', projectAttrs, projectRels)), expected);
 });
