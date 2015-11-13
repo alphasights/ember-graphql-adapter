@@ -4,6 +4,11 @@ import Ember from 'ember';
 export default DS.JSONAPISerializer.extend({
   serialize: function(snapshot) {
     let data = {};
+
+    if (snapshot.id) {
+      data[Ember.get(this, 'primaryKey')] = snapshot.id;
+    }
+
     snapshot.eachAttribute((key, attribute) => {
       this.__serializeAttribute(snapshot, data, key, attribute);
     });
@@ -95,7 +100,6 @@ export default DS.JSONAPISerializer.extend({
   __extractId: function(resourceHash) {
     return resourceHash['id'];
   },
-
 
   __extractAttributes: function(modelClass, resourceHash, serializer) {
     const attributes = {};

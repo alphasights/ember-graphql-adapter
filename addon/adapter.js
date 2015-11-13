@@ -81,7 +81,7 @@ export default DS.Adapter.extend({
     serializer.serializeIntoHash(data, type, snapshot);
 
     return this.request(store, type, {
-      'rootFieldQuery': data[type.modelName],
+      'rootFieldQuery': data,
       'rootFieldAlias': type.modelName,
       'rootFieldName': type.modelName + 'Create',
       'operationType': 'mutation',
