@@ -96,7 +96,6 @@ export default DS.JSONAPISerializer.extend({
     return resourceHash['id'];
   },
 
-
   __extractAttributes: function(modelClass, resourceHash, serializer) {
     const attributes = {};
 
