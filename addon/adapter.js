@@ -70,10 +70,6 @@ export default DS.Adapter.extend({
     });
   },
 
-  compile: function(store, type, options) {
-    return Compiler.compile(type, store, options);
-  },
-
   createRecord: function(store, type, snapshot) {
     var data = {};
     var serializer = store.serializerFor(type.modelName);
@@ -99,6 +95,10 @@ export default DS.Adapter.extend({
       'operationType': 'mutation',
       'operationName': type.modelName + 'Delete'
     });
+  },
+
+  compile: function(store, type, options) {
+    return Compiler.compile(type, store, options);
   },
 
   /**
