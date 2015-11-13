@@ -91,8 +91,14 @@ export default DS.Adapter.extend({
 
     serializer.serializeIntoHash(data, type, snapshot);
 
+    // I don't think this changeset thing will work if you update relations
+    var payload = { id: data['id'] };
+    Object.keys(snapshot.changedAttributes()).forEach((key) => {
+      payload[key] = data[key];
+    });
+
     return this.request(store, type, {
-      'rootFieldQuery': data,
+      'rootFieldQuery': payload,
       'rootFieldAlias': type.modelName,
       'rootFieldName': type.modelName + 'Update',
       'operationType': 'mutation',
