@@ -128,11 +128,11 @@ export default DS.JSONAPISerializer.extend({
     return relationships;
   },
 
-  keyForAttribute: function(key, method) {
+  keyForAttribute: function(key) {
     return Ember.String.underscore(key);
   },
 
-  keyForRelationship: function(key, typeClass, method) {
+  keyForRelationship: function(key) {
     return Ember.String.underscore(key);
   }
 });
