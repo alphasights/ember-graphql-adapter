@@ -70,10 +70,6 @@ export default DS.Adapter.extend({
     });
   },
 
-  compile: function(store, type, options) {
-    return Compiler.compile(type, store, options);
-  },
-
   createRecord: function(store, type, snapshot) {
     var data = {};
     var serializer = store.serializerFor(type.modelName);
@@ -89,6 +85,21 @@ export default DS.Adapter.extend({
     });
   },
 
+  updateRecord: function(store, type, snapshot) {
+    var data = {};
+    var serializer = store.serializerFor(type.modelName);
+
+    serializer.serializeIntoHash(data, type, snapshot);
+
+    return this.request(store, type, {
+      'rootFieldQuery': data,
+      'rootFieldAlias': type.modelName,
+      'rootFieldName': type.modelName + 'Update',
+      'operationType': 'mutation',
+      'operationName': type.modelName + 'Update'
+    });
+  },
+
   deleteRecord: function(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
 
@@ -99,6 +110,10 @@ export default DS.Adapter.extend({
       'operationType': 'mutation',
       'operationName': type.modelName + 'Delete'
     });
+  },
+
+  compile: function(store, type, options) {
+    return Compiler.compile(type, store, options);
   },
 
   /**

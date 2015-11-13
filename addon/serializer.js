@@ -30,7 +30,7 @@ export default DS.JSONAPISerializer.extend({
     if (this._canSerialize(key)) {
       var belongsTo = snapshot.belongsTo(key);
 
-      if (belongsTo !== undefined) {
+      if (belongsTo) {
         var payloadKey = this._getMappedKey(key);
         if (payloadKey === key) {
           payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
@@ -126,5 +126,13 @@ export default DS.JSONAPISerializer.extend({
     });
 
     return relationships;
+  },
+
+  keyForAttribute: function(key, method) {
+    return Ember.String.underscore(key);
+  },
+
+  keyForRelationship: function(key, typeClass, method) {
+    return Ember.String.underscore(key);
   }
 });
