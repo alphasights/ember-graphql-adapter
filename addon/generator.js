@@ -12,6 +12,8 @@ Generator.argumentSetClosingToken = ')';
 Generator.argumentKeyValueSeparateToken = ': ';
 Generator.argumentStringWrapperToken = '"';
 Generator.argumentSeparatorToken = ', ';
+Generator.argumentArrayOpeningToken = '[';
+Generator.argumentArrayClosingToken = ']';
 
 Generator.separatorToken = ' ';
 
@@ -76,6 +78,8 @@ Generator.generateArgument = function(argument) {
   let value;
   if (Ember.typeOf(argument.value) === 'string') {
     value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
+  } else if (Ember.typeOf(argument.value) === 'array') {
+    value = this.argumentArrayOpeningToken + argument.value + this.argumentArrayClosingToken;
   } else if (Ember.typeOf(argument.value) === 'object') {
     value = this.generateArgumentSet(argument.value, "{ ") + " }";
   } else {
