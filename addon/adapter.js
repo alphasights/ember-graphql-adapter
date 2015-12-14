@@ -5,7 +5,7 @@ import Compiler from './compiler';
 export default DS.Adapter.extend({
   endpoint: null,
   param: "query",
-  defaultSerializer: 'graphql-adapter/serializer',
+  defaultSerializer: '-graphql',
   coalesceFindRequests: true,
 
   /**
@@ -131,13 +131,24 @@ export default DS.Adapter.extend({
      @return {Promise} promise
   */
   request: function(store, type, options) {
-    let adapter = this;
-
     let compiledQuery = this.compile(store, type, options);
     let url = this.endpoint;
 
+    return this.ajax(store, { query: compiledQuery });
+  },
+
+  /**
+     @method ajax
+     @private
+     @param {DS.Store} store
+     @params {Object} options
+     @return {Promise} promise
+  */
+  ajax: function(store, options) {
+    let adapter = this;
+
     return new Ember.RSVP.Promise(function(resolve, reject) {
-      let ajaxOpts = adapter.ajaxOptions(url, { query: compiledQuery });
+      let ajaxOpts = adapter.ajaxOptions(url, options);
 
       ajaxOpts.success = function(payload, textStatus, jqXHR) {
         let response;
