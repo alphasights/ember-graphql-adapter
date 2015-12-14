@@ -1,7 +1,7 @@
 {
-  "name": "graphql-adapter",
-  "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "name": "ember-graphql-adapter",
+  "version": "0.0.1",
+  "description": "An Ember CLI adapter for GraphQL",
   "directories": {
     "doc": "doc",
     "test": "tests"
