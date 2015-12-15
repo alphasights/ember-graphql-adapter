@@ -21,7 +21,7 @@ export default DS.Adapter.extend({
      @param {DS.Store} store
      @param {DS.Model} type
      @param {Object} query
-     @return {Promise} promise)rser
+     @return {Promise} promise
   */
   query: function(store, type, query) {
     let operationName = Ember.String.pluralize(type.modelName);
