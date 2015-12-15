@@ -8,8 +8,4 @@ export {
   Serializer
 };
 
-export default {
-  Adapter,
-  Compiler,
-  Serializer
-};
+export default Adapter;

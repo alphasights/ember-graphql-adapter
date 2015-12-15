@@ -1,11 +1,11 @@
 import { test, module } from 'qunit';
-import Parser from 'graphql-adapter/parser';
-import * as Type from 'graphql-adapter/types';
-import ArgumentSet from 'graphql-adapter/types/argument-set';
+import Parser from 'ember-graphql-adapter/parser';
+import * as Type from 'ember-graphql-adapter/types';
+import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 
-module('unit:graphql-adapter/parser', {
+module('unit:ember-graphql-adapter/parser', {
   setup: function() {
     let projectModel = new ModelDouble('projects', ['status', 'name'], ['user']);
     let userModel = new ModelDouble('user', ['name']);

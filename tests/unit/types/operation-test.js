@@ -1,7 +1,7 @@
 import { test, module } from 'qunit';
-import Operation from 'graphql-adapter/types/operation';
+import Operation from 'ember-graphql-adapter/types/operation';
 
-module('unit:graphql-adapter/types/operation');
+module('unit:ember-graphql-adapter/types/operation');
 
 test("can be initialized", function(assert) {
   let operation = new Operation('query', 'projects');

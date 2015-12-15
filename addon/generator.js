@@ -1,86 +1,89 @@
 import Ember from 'ember';
 
-export default function Generator() {}
+export default {
+  openingToken: '{',
+  closingToken: '}',
+  aliasSeparatorToken: ': ',
 
-Generator.openingToken = '{';
-Generator.closingToken = '}';
+  argumentSetOpeningToken: '(',
+  argumentSetClosingToken: ')',
+  argumentKeyValueSeparateToken: ': ',
+  argumentStringWrapperToken: '"',
+  argumentSeparatorToken: ', ',
+  argumentArrayOpeningToken: '[',
+  argumentArrayClosingToken: ']',
 
-Generator.aliasSeparatorToken = ': ';
+  separatorToken: ' ',
+  emptyToken: '',
 
-Generator.argumentSetOpeningToken = '(';
-Generator.argumentSetClosingToken = ')';
-Generator.argumentKeyValueSeparateToken = ': ';
-Generator.argumentStringWrapperToken = '"';
-Generator.argumentSeparatorToken = ', ';
+  generate(parseTree) {
+    return this.openOperation(parseTree);
+  },
 
-Generator.separatorToken = ' ';
+  openOperation(operation) {
+    let acc = operation.type;
+    return acc + this.generateField(operation);
+  },
 
-Generator.emptyToken = '';
+  closeOperation(acc) {
+    return acc + this.closingToken;
+  },
 
-Generator.generate = function(parseTree) {
-  return this.openOperation(parseTree);
-};
+  generateField(field) {
+    let acc = this.separatorToken;
 
-Generator.openOperation = function(operation) {
-  let acc = operation.type;
-  return acc + this.generateField(operation);
-};
+    if (field.alias) {
+      acc = acc + field.alias + this.aliasSeparatorToken;
+    }
 
-Generator.closeOperation = function(acc) {
-  return acc + this.closingToken;
-};
+    acc = acc + field.name;
 
-Generator.generateField = function(field) {
-  let acc = this.separatorToken;
+    if (field.argumentSet.length > 0) {
+      acc = acc + this.argumentSetOpeningToken;
+      acc = this.generateArgumentSet(field.argumentSet, acc);
+      acc = acc + this.argumentSetClosingToken;
+    }
 
-  if (field.alias) {
-    acc = acc + field.alias + this.aliasSeparatorToken;
+    acc = acc + this.separatorToken;
+
+    if (field.selectionSet.length > 0) {
+      acc = this.generateSelectionSet(field.selectionSet, acc);
+    }
+
+    return acc;
+  },
+
+  generateSelectionSet(set, acc) {
+    acc = acc + this.openingToken;
+
+    set.forEach((field) => {
+      acc = acc + this.generateField(field, acc);
+    });
+
+    return acc + this.closingToken + this.separatorToken;
+  },
+
+  generateArgumentSet(set, acc) {
+    acc = acc + set.map((argument) => {
+      return this.generateArgument(argument);
+    }).join(this.argumentSeparatorToken);
+
+    return acc;
+  },
+
+  generateArgument(argument) {
+    let value;
+
+    if (Ember.typeOf(argument.value) === 'string') {
+      value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
+    } else if (Ember.typeOf(argument.value) === 'array') {
+      value = this.argumentArrayOpeningToken + argument.value + this.argumentArrayClosingToken;
+    } else if (Ember.typeOf(argument.value) === 'object') {
+      value = this.generateArgumentSet(argument.value, "{ ") + " }";
+    } else {
+      value = argument.value;
+    }
+
+    return argument.name + this.argumentKeyValueSeparateToken + value;
   }
-
-  acc = acc + field.name;
-
-  if (field.argumentSet.length > 0) {
-    acc = acc + this.argumentSetOpeningToken;
-    acc = this.generateArgumentSet(field.argumentSet, acc);
-    acc = acc + this.argumentSetClosingToken;
-  }
-
-  acc = acc + this.separatorToken;
-
-  if (field.selectionSet.length > 0) {
-    acc = this.generateSelectionSet(field.selectionSet, acc);
-  }
-
-  return acc;
-};
-
-Generator.generateSelectionSet = function(set, acc) {
-  acc = acc + this.openingToken;
-
-  set.forEach((field) => {
-    acc = acc + this.generateField(field, acc);
-  });
-
-  return acc + this.closingToken + this.separatorToken;
-};
-
-Generator.generateArgumentSet = function(set, acc) {
-  acc = acc + set.map((argument) => {
-    return this.generateArgument(argument);
-  }).join(this.argumentSeparatorToken);
-
-  return acc;
-};
-
-Generator.generateArgument = function(argument) {
-  let value;
-  if (Ember.typeOf(argument.value) === 'string') {
-    value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
-  } else if (Ember.typeOf(argument.value) === 'object') {
-    value = this.generateArgumentSet(argument.value, "{ ") + " }";
-  } else {
-    value = argument.value;
-  }
-
-  return argument.name + this.argumentKeyValueSeparateToken + value;
 };

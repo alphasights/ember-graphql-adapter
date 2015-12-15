@@ -1,11 +1,11 @@
 import { test, module } from 'qunit';
-import Serializer from 'graphql-adapter/serializer';
+import Serializer from 'ember-graphql-adapter/serializer';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 import ContainerDouble from '../helpers/container-double';
 import SnapshotDouble from '../helpers/snapshot-double';
 
-module('unit:graphql-adapter/serializer');
+module('unit:ember-graphql-adapter/serializer');
 
 test ('normalizing simple scalars', function(assert) {
   let postModel = new ModelDouble('post', ['title', 'body']);
@@ -160,45 +160,4 @@ test("serializes json api style data to a query usable as an ArgumentSet", funct
   };
 
   assert.deepEqual(serializer.serialize(new SnapshotDouble('project', projectAttrs, projectRels)), expected);
-});
-
-test('normalizing with relationships', function(assert) {
-  let postModel = new ModelDouble('post', ['title', 'body'], ['user']);
-  let serializer = new Serializer();
-
-  let payload = {
-    'data': {
-      'post': {
-        'id': '1',
-        'title': 'The post title',
-        'body': 'The body title',
-        'user': {
-          'id': '2',
-          'email': 'jjbohn@gmail.com',
-          'name': 'John Bohn'
-        }
-      }
-    }
-  };
-
-  let expectedNormalization = {
-    'data': {
-      'type': 'post',
-      'id': '1',
-      'attributes': {
-        'title': 'The post title',
-        'body': 'The body title',
-      },
-      'relationships': {
-        'user': {
-          'data': {
-            'type': 'user',
-            'id': '2'
-          }
-        }
-      }
-    }
-  };
-
-  assert.deepEqual(serializer.normalize(postModel, payload['data']), expectedNormalization);
 });

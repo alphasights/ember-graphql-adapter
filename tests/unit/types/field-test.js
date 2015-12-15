@@ -1,7 +1,7 @@
 import { test, module } from 'qunit';
-import { ArgumentSet, Field, SelectionSet } from 'graphql-adapter/types';
+import { ArgumentSet, Field, SelectionSet } from 'ember-graphql-adapter/types';
 
-module('unit:graphql-adapter/types/field');
+module('unit:ember-graphql-adapter/types/field');
 
 test('can be constructed', function(assert) {
   let selectionSet = new SelectionSet();

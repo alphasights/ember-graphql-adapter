@@ -1,4 +1,6 @@
-export default function Argument(name, value) {
-  this.name = name;
-  this.value = value;
+export default class Argument {
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
+  }
 }

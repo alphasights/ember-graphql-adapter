@@ -1,7 +1,7 @@
 import { test, module } from 'qunit';
-import ArgumentSet from 'graphql-adapter/types/argument-set';
+import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
 
-module('unit:graphql-adapter/types/argument-set');
+module('unit:ember-graphql-adapter/types/argument-set');
 
 test("is stack-like", function(assert) {
   let set = new ArgumentSet(1, 2);

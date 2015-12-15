@@ -1,8 +1,8 @@
 import { test, module } from 'qunit';
-import Generator from 'graphql-adapter/generator';
-import * as Type from 'graphql-adapter/types';
+import Generator from 'ember-graphql-adapter/generator';
+import * as Type from 'ember-graphql-adapter/types';
 
-module('unit:graphql-adapter/generator');
+module('unit:ember-graphql-adapter/generator');
 
 test('all the things', function(assert) {
   let fieldId = new Type.Field('id');
@@ -15,6 +15,7 @@ test('all the things', function(assert) {
 
   let postSelectionSet = new Type.SelectionSet(fieldId, fieldStatus, fieldAuthor);
   let postArgumentSet = new Type.ArgumentSet(
+    new Type.Argument('ids', [1,2,3]),
     new Type.Argument('status', 'active'),
     new Type.Argument('embedded', new Type.ArgumentSet(new Type.Argument('id', 1))),
     new Type.Argument('limit', 10),
@@ -26,5 +27,5 @@ test('all the things', function(assert) {
   let operationArgumentSet = new Type.ArgumentSet();
   let operation = new Type.Operation('query', 'postsQuery', operationArgumentSet, operationSelectionSet);
 
-  assert.equal(Generator.generate(operation), `query postsQuery { postAlias: post(status: "active", embedded: { id: 1 }, limit: 10, offset: 0) { id  status  author { id  username } } } `);
+  assert.equal(Generator.generate(operation), `query postsQuery { postAlias: post(ids: [1,2,3], status: "active", embedded: { id: 1 }, limit: 10, offset: 0) { id  status  author { id  username } } } `);
 });
