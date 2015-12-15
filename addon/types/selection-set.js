@@ -1,5 +1,6 @@
-export default function SelectionSet() {
-  this.push.apply(this, Array.prototype.slice.call(arguments));
+export default class SelectionSet extends Array {
+  constructor(...args) {
+    super();
+    this.push(...args);
+  }
 }
-
-SelectionSet.prototype = Object.create(Array.prototype);
