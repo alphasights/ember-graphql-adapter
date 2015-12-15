@@ -210,7 +210,7 @@ export default DS.Adapter.extend({
       };
 
       Ember.$.ajax(options);
-    }, 'ember-graphql-adapter#ajax ' + type + ' to ' + options.url);
+    }, 'graphql-adapter#ajax ' + type + ' to ' + options.url);
   },
 
   /**

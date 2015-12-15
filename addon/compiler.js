@@ -1,7 +1,7 @@
-import Parser from 'graphql-adapter/parser';
-import Generator from 'graphql-adapter/generator';
-import ArgumentSet from 'graphql-adapter/types/argument-set';
-import { Field, Operation } from 'graphql-adapter/types';
+import Parser from 'ember-graphql-adapter/parser';
+import Generator from 'ember-graphql-adapter/generator';
+import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
+import { Field, Operation } from 'ember-graphql-adapter/types';
 
 export default function Compiler() {}
 

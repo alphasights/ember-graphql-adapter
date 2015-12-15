@@ -1,11 +1,11 @@
 import { test, module } from 'qunit';
-import Serializer from 'graphql-adapter/serializer';
+import Serializer from 'ember-graphql-adapter/serializer';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 import ContainerDouble from '../helpers/container-double';
 import SnapshotDouble from '../helpers/snapshot-double';
 
-module('unit:graphql-adapter/serializer');
+module('unit:ember-graphql-adapter/serializer');
 
 test ('normalizing simple scalars', function(assert) {
   let postModel = new ModelDouble('post', ['title', 'body']);

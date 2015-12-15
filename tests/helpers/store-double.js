@@ -1,4 +1,4 @@
-import Serializer from 'graphql-adapter/serializer';
+import Serializer from 'ember-graphql-adapter/serializer';
 
 export default function StoreDouble(map) {
   this.map = map;

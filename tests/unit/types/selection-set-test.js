@@ -1,7 +1,7 @@
 import { test, module } from 'qunit';
-import SelectionSet from 'graphql-adapter/types/selection-set';
+import SelectionSet from 'ember-graphql-adapter/types/selection-set';
 
-module('unit:graphql-adapter/types/selection-set');
+module('unit:ember-graphql-adapter/types/selection-set');
 
 test("is stack-like", function(assert) {
   let set = new SelectionSet(1, 2);

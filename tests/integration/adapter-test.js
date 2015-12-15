@@ -1,7 +1,7 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
 import {module, test} from 'qunit';
-import Adapter from 'graphql-adapter';
+import Adapter from 'ember-graphql-adapter';
 
 var env, store, adapter;
 var passedUrl, passedQuery;

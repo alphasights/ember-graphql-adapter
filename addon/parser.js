@@ -1,4 +1,4 @@
-import * as Type from 'graphql-adapter/types';
+import * as Type from 'ember-graphql-adapter/types';
 
 export default function Parser() {}
 

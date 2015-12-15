@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import DS from 'ember-data';
-import {Adapter, Serializer} from 'graphql-adapter';
+import {Adapter, Serializer} from 'ember-graphql-adapter';
 
 export default function setupStore(options) {
   var container, registry;

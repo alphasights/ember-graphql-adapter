@@ -1,9 +1,9 @@
 import { test, module } from 'qunit';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
-import Compiler from 'graphql-adapter/compiler';
+import Compiler from 'ember-graphql-adapter/compiler';
 
-module('unit:graphql-adapter/compiler');
+module('unit:ember-graphql-adapter/compiler');
 
 test("takes an Model and responds with GraphQL query", function(assert) {
   let model = new ModelDouble('project', ['status']);
