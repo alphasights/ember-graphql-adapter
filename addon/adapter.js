@@ -4,7 +4,7 @@ import Compiler from './compiler';
 
 export default DS.Adapter.extend({
   endpoint: null,
-  param: "query",
+  param: 'query',
   defaultSerializer: '-graphql',
   coalesceFindRequests: true,
 
@@ -133,24 +133,22 @@ export default DS.Adapter.extend({
   request: function(store, type, options) {
     let compiledQuery = this.compile(store, type, options);
     let url = this.endpoint;
+    let ajaxOpts = this.ajaxOptions(url, { query: compiledQuery });
 
-    return this.ajax(store, { query: compiledQuery });
+    return this.ajax(ajaxOpts);
   },
 
   /**
      @method ajax
      @private
-     @param {DS.Store} store
      @params {Object} options
      @return {Promise} promise
   */
-  ajax: function(store, options) {
+  ajax: function(options) {
     let adapter = this;
 
     return new Ember.RSVP.Promise(function(resolve, reject) {
-      let ajaxOpts = adapter.ajaxOptions(url, options);
-
-      ajaxOpts.success = function(payload, textStatus, jqXHR) {
+      options.success = function(payload, textStatus, jqXHR) {
         let response;
 
         if (!(response instanceof DS.AdapterError)) {
@@ -169,7 +167,7 @@ export default DS.Adapter.extend({
         }
       };
 
-      ajaxOpts.error = function(jqXHR, textStatus, errorThrown) {
+      options.error = function(jqXHR, textStatus, errorThrown) {
         let error;
 
         if (!(error instanceof DS.Error)) {
@@ -192,8 +190,8 @@ export default DS.Adapter.extend({
         Ember.run(null, reject, error);
       };
 
-      Ember.$.ajax(ajaxOpts);
-    }, 'DS: RESTAdapter#ajax ' + type + ' to ' + url);
+      Ember.$.ajax(options);
+    }, 'ember-graphql-adapter#ajax ' + type + ' to ' + options.url);
   },
 
   /**

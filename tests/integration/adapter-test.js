@@ -4,6 +4,7 @@ import {module, test} from 'qunit';
 import Adapter from 'graphql-adapter';
 
 var env, store, adapter;
+var passedUrl, passedQuery;
 var run = Ember.run;
 var Post;
 
@@ -27,13 +28,16 @@ module("GraphQL adapter", {
 });
 
 function ajaxResponse(value) {
-  adapter.ajax = function() {
+  adapter.ajax = function({url, data}) {
+    passedUrl = url;
+    passedQuery = data.query;
+
     return run(Ember.RSVP, 'resolve', Ember.copy(value, true));
   };
 }
 
 test('find a single record', function(assert) {
-  assert.expect(2);
+  assert.expect(4);
 
   ajaxResponse({
     data: {
@@ -46,6 +50,9 @@ test('find a single record', function(assert) {
 
   run(function() {
     store.findRecord('post', 1).then(function(post) {
+      assert.equal(passedUrl, 'graph');
+      assert.equal(passedQuery, 'query post { post(id: "1") { id  title } } ');
+
       assert.equal(post.get('id'), '1');
       assert.equal(post.get('title'), 'Ember.js rocks');
     });
