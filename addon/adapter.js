@@ -6,7 +6,7 @@ export default DS.Adapter.extend({
   endpoint: null,
   param: 'query',
   defaultSerializer: '-graphql',
-  coalesceFindRequests: true,
+  coalesceFindRequests: false,
 
   /**
      Called by the store in order to fetch JSON for
@@ -67,6 +67,25 @@ export default DS.Adapter.extend({
       'rootFieldName': type.modelName,
       'operationType': 'query',
       'operationName': type.modelName
+    });
+  },
+
+  /**
+    @method findMany
+    @param {DS.Store} store
+    @param {DS.Model} type
+    @param {Array} ids
+    @param {Array} snapshots
+    @return {Promise} promise
+  */
+  findMany(store, type, ids, snapshots) {
+    let operationName = Ember.String.pluralize(type.modelName);
+
+    return this.request(store, type, {
+      'rootFieldQuery': { 'ids': ids },
+      'rootFieldName': operationName,
+      'operationType': 'query',
+      'operationName': operationName
     });
   },
 
