@@ -33,7 +33,7 @@ export default DS.JSONAPISerializer.extend({
       var belongsTo = snapshot.belongsTo(key);
 
       if (belongsTo) {
-        var payloadKey = this._getMappedKey(key);
+        var payloadKey = this._getMappedKey(key, snapshot.type);
         if (payloadKey === key) {
           payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
         }
@@ -52,7 +52,7 @@ export default DS.JSONAPISerializer.extend({
         let transform = this.transformFor(type);
         value = transform.serialize(value);
       }
-      var payloadKey =  this._getMappedKey(key);
+      var payloadKey =  this._getMappedKey(key, snapshot.type);
       if (payloadKey === key) {
         payloadKey = this.keyForAttribute(key, 'serialize');
       }
