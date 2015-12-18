@@ -27,5 +27,5 @@ test('all the things', function(assert) {
   let operationArgumentSet = new Type.ArgumentSet();
   let operation = new Type.Operation('query', 'postsQuery', operationArgumentSet, operationSelectionSet);
 
-  assert.equal(Generator.generate(operation), `query postsQuery { postAlias: post(ids: [1,2,3], status: "active", embedded: { id: 1 }, limit: 10, offset: 0) { id  status  author { id  username } } } `);
+  assert.equal(Generator.generate(operation), `query postsQuery { postAlias: post(ids: [1,2,3], status: "active", embedded: { id: 1 }, limit: 10, offset: 0) { id status author { id username } } }`);
 });
