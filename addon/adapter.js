@@ -83,6 +83,34 @@ export default DS.Adapter.extend({
   },
 
   /**
+    Called by the store in order to fetch JSON for a single record that
+    matches a particular query.
+
+    The `query` method makes an Ajax (HTTP GET) request to the GraphQL
+    endpoint, and returns a promise for the resulting payload.
+
+    The `query` argument is a simple JavaScript object that will be
+    passed to the GraphQL compiler and becomes arguments for the
+    GraphQL query.
+
+    @method queryRecord
+    @param {DS.Store} store
+    @param {DS.Model} type
+    @param {Object} query
+    @return {Promise} promise
+  */
+  queryRecord: function(store, type, query) {
+    let operationName = type.modelName;
+
+    return this.request(store, type, {
+      'rootFieldName': operationName,
+      'rootFieldQuery': query,
+      'operationType': 'query',
+      'operationName': operationName
+    });
+  },
+
+  /**
     Called by the store in order to fetch several records together if `coalesceFindRequests` is true
 
     @method findMany
