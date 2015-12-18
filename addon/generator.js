@@ -1,32 +1,24 @@
 import Ember from 'ember';
 
 export default {
-  openingToken: '{',
-  closingToken: '}',
-  aliasSeparatorToken: ': ',
-
-  argumentSetOpeningToken: '(',
-  argumentSetClosingToken: ')',
-  argumentKeyValueSeparateToken: ': ',
-  argumentStringWrapperToken: '"',
-  argumentSeparatorToken: ', ',
-  argumentArrayOpeningToken: '[',
-  argumentArrayClosingToken: ']',
-
+  openingToken: ' {',
+  closingToken: ' }',
   separatorToken: ' ',
+  aliasSeparatorToken: ': ',
   emptyToken: '',
 
+  argumentArrayClosingToken: ']',
+  argumentArrayOpeningToken: '[',
+  argumentKeyValueSeparateToken: ': ',
+  argumentObjectClosingToken: ' }',
+  argumentObjectOpeningToken: '{ ',
+  argumentSeparatorToken: ', ',
+  argumentSetClosingToken: ')',
+  argumentSetOpeningToken: '(',
+  argumentStringWrapperToken: '"',
+
   generate(parseTree) {
-    return this.openOperation(parseTree);
-  },
-
-  openOperation(operation) {
-    let acc = operation.type;
-    return acc + this.generateField(operation);
-  },
-
-  closeOperation(acc) {
-    return acc + this.closingToken;
+    return parseTree.type + this.generateField(parseTree);
   },
 
   generateField(field) {
@@ -39,51 +31,33 @@ export default {
     acc = acc + field.name;
 
     if (field.argumentSet.length > 0) {
-      acc = acc + this.argumentSetOpeningToken;
-      acc = this.generateArgumentSet(field.argumentSet, acc);
-      acc = acc + this.argumentSetClosingToken;
+      acc = acc + this.argumentSetOpeningToken + this.generateArgumentSet(field.argumentSet) + this.argumentSetClosingToken;
     }
-
-    acc = acc + this.separatorToken;
 
     if (field.selectionSet.length > 0) {
-      acc = this.generateSelectionSet(field.selectionSet, acc);
+      acc = acc + this.openingToken + this.generateSelectionSet(field.selectionSet) + this.closingToken;
     }
 
     return acc;
   },
 
-  generateSelectionSet(set, acc) {
-    acc = acc + this.openingToken;
-
-    set.forEach((field) => {
-      acc = acc + this.generateField(field, acc);
-    });
-
-    return acc + this.closingToken + this.separatorToken;
+  generateSelectionSet(set) {
+    return set.map(field => this.generateField(field)).join('');
   },
 
-  generateArgumentSet(set, acc) {
-    acc = acc + set.map((argument) => {
-      return this.generateArgument(argument);
-    }).join(this.argumentSeparatorToken);
-
-    return acc;
+  generateArgumentSet(set) {
+    return set.map(argument => this.generateArgument(argument)).join(this.argumentSeparatorToken);
   },
 
-  generateArgument(argument) {
-    let value;
-
-    if (Ember.typeOf(argument.value) === 'string') {
-      value = this.argumentStringWrapperToken + argument.value + this.argumentStringWrapperToken;
-    } else if (Ember.typeOf(argument.value) === 'array') {
-      value = this.argumentArrayOpeningToken + argument.value + this.argumentArrayClosingToken;
-    } else if (Ember.typeOf(argument.value) === 'object') {
-      value = this.generateArgumentSet(argument.value, "{ ") + " }";
-    } else {
-      value = argument.value;
+  generateArgument({name, value}) {
+    if (Ember.typeOf(value) === 'string') {
+      value = this.argumentStringWrapperToken + value + this.argumentStringWrapperToken;
+    } else if (Ember.typeOf(value) === 'array') {
+      value = this.argumentArrayOpeningToken + value + this.argumentArrayClosingToken;
+    } else if (Ember.typeOf(value) === 'object') {
+      value = this.argumentObjectOpeningToken + this.generateArgumentSet(value) + this.argumentObjectClosingToken;
     }
 
-    return argument.name + this.argumentKeyValueSeparateToken + value;
+    return name + this.argumentKeyValueSeparateToken + value;
   }
 };
