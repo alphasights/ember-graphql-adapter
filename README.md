@@ -3,8 +3,9 @@
 [![Npm Version](https://badge.fury.io/js/ember-graphql-adapter.svg)](http://badge.fury.io/js/ember-graphql-adapter)
 [![Code Climate](https://codeclimate.com/repos/56718e7b080d2e007b000e1d/badges/8a110d437cbb217f1924/gpa.svg)](https://codeclimate.com/repos/56718e7b080d2e007b000e1d/feed)
 [![Circle CI](https://circleci.com/gh/alphasights/ember-graphql-adapter/tree/master.svg?style=shield&circle-token=b7ad9e9231130c64c6f7bf0e9a7f870cea9ca8e4)](https://circleci.com/gh/alphasights/ember-graphql-adapter/tree/master)
+[![Ember Observer Score](http://emberobserver.com/badges/ember-graphql-adapter.svg)](http://emberobserver.com/addons/ember-graphql-adapter)
 
-An Ember CLI adapter for using GraphQL with Ember Data.
+A  Ember CLI adapter for using GraphQL with Ember Data.
 
 ## Installation
 
