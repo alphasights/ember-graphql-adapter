@@ -28,9 +28,9 @@ Now define your serializer
 
 ```js
 // app/serializers/post.js
-import { GraphQLSerializer } from 'ember-graphql-adapter';
+import { Serializer } from 'ember-graphql-adapter';
 
-export default GraphQLSerializer.extend({});
+export default Serializer.extend({});
 ```
 
 And you're done!
