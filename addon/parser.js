@@ -1,4 +1,5 @@
 import * as Type from 'ember-graphql-adapter/types';
+import Ember from 'ember';
 
 export default {
   parse(model, store, operation, rootField) {
@@ -10,7 +11,7 @@ export default {
     });
 
     model.eachRelationship((rel) => {
-      let relModel = store.modelFor(rel);
+      let relModel = store.modelFor(Ember.String.singularize(rel));
       let field = new Type.Field(
         rel,
         null,
