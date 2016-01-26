@@ -80,16 +80,17 @@ export default DS.JSONAPISerializer.extend({
       });
 
       primaryModelClass.eachRelationship((key) => {
-        const include = item[key];
-        if (!include) { return; }
+        let includes = item[key];
+        if (!includes) { return; }
+
+        if (Ember.typeOf(includes) !== 'array') { includes = [includes]; }
 
         const includeModelClass = store.modelFor(Ember.String.singularize(key));
         const serializer = store.serializerFor(includeModelClass.modelName);
 
-        documentHash['included'].push({
-          'type': includeModelClass.modelName,
-          'id': this.__extractId(include),
-          'attributes': this.__extractAttributes(includeModelClass, include, serializer),
+        includes = this.__normalizeIncludes(store, includes, includeModelClass, serializer);
+        includes.forEach((include) => {
+          documentHash['included'].push(include);
         });
       });
     });
@@ -97,6 +98,16 @@ export default DS.JSONAPISerializer.extend({
     if (singular) { documentHash['data'] = documentHash['data'][0]; }
 
     return this._super(store, primaryModelClass, documentHash, id, requestType);
+  },
+
+  __normalizeIncludes: function(store, includes, includeModelClass, serializer) {
+    return includes.map((include) => {
+      return {
+        'type': includeModelClass.modelName,
+        'id': this.__extractId(include),
+        'attributes': this.__extractAttributes(includeModelClass, include, serializer),
+      };
+    });
   },
 
   __extractId: function(resourceHash) {
@@ -119,15 +130,25 @@ export default DS.JSONAPISerializer.extend({
     modelClass.eachRelationship((key) => {
       const relHash = resourceHash[key];
       if (!relHash) { return; }
-      relationships[this.keyForRelationship(key)] = {
-        'data': {
-          'id': relHash['id'],
-          'type': Ember.String.singularize(key)
-        }
-      };
+
+      let data;
+      if (Ember.typeOf(relHash) === 'array') {
+        data = relHash.map((item) => this.__createRelationship(item['id'], key));
+      } else {
+        data = this.__createRelationship(relHash['id'], key);
+      }
+
+      relationships[this.keyForRelationship(key)] = { 'data': data };
     });
 
     return relationships;
+  },
+
+  __createRelationship: function(id, key) {
+    return {
+      'id': id,
+      'type': Ember.String.singularize(key)
+    };
   },
 
   keyForAttribute: function(key) {

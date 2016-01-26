@@ -85,9 +85,10 @@ test ('normalizing simple scalars in array payload', function(assert) {
 });
 
 test('normalizing with relationships', function(assert) {
-  let postModel = new ModelDouble('post', ['title', 'body'], ['user']);
+  let postModel = new ModelDouble('post', ['title', 'body'], ['user', 'comments']);
   let userModel = new ModelDouble('user', ['email', 'name']);
-  let store = new StoreDouble({ 'post': postModel, 'user': userModel });
+  let commentModel = new ModelDouble('comment', ['body']);
+  let store = new StoreDouble({ 'post': postModel, 'user': userModel, 'comment': commentModel });
   let serializer = new Serializer();
   serializer.store = store;
 
@@ -101,7 +102,11 @@ test('normalizing with relationships', function(assert) {
           'id': '2',
           'email': 'jjbohn@gmail.com',
           'name': 'John Bohn'
-        }
+        },
+        'comments': [
+          { 'id': '3', 'body': 'The first comment body' },
+          { 'id': '4', 'body': 'The second comment body' }
+        ]
       }
     }
   };
@@ -120,6 +125,12 @@ test('normalizing with relationships', function(assert) {
             'type': 'user',
             'id': '2'
           }
+        },
+        'comments': {
+          'data': [
+            { 'type': 'comment', 'id': '3' },
+            { 'type': 'comment', 'id': '4' }
+          ]
         }
       }
     },
@@ -129,6 +140,20 @@ test('normalizing with relationships', function(assert) {
       'attributes': {
         'email': 'jjbohn@gmail.com',
         'name': 'John Bohn'
+      },
+      'relationships': {}
+    }, {
+      'type': 'comment',
+      'id': '3',
+      'attributes': {
+        'body': 'The first comment body'
+      },
+      'relationships': {}
+    }, {
+      'type': 'comment',
+      'id': '4',
+      'attributes': {
+        'body': 'The second comment body'
       },
       'relationships': {}
     }]
