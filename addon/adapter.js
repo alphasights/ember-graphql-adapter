@@ -22,11 +22,13 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findRecord: function(store, type, id) {
+    let operationName = this._normalizeModelName(type.modelName);
+
     return this.request(store, type, {
       'rootFieldQuery': { 'id': id },
-      'rootFieldName': type.modelName,
+      'rootFieldName': operationName,
       'operationType': 'query',
-      'operationName': type.modelName
+      'operationName': operationName
     });
   },
 
@@ -43,7 +45,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
-    let operationName = Ember.String.pluralize(type.modelName);
+    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
 
     let options = {
       'rootFieldName': operationName,
@@ -72,7 +74,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   query: function(store, type, query) {
-    let operationName = Ember.String.pluralize(type.modelName);
+    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -100,7 +102,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   queryRecord: function(store, type, query) {
-    let operationName = type.modelName;
+    let operationName = this._normalizeModelName(type.modelName);
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -120,7 +122,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findMany(store, type, ids) {
-    let operationName = Ember.String.pluralize(type.modelName);
+    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldQuery': { 'ids': ids },
@@ -141,17 +143,18 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   createRecord: function(store, type, snapshot) {
-    var data = {};
-    var serializer = store.serializerFor(type.modelName);
+    let data = {};
+    let serializer = store.serializerFor(type.modelName);
+    let operationName = this._normalizeModelName(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
     return this.request(store, type, {
       'rootFieldQuery': data,
-      'rootFieldAlias': type.modelName,
-      'rootFieldName': type.modelName + 'Create',
+      'rootFieldAlias': operationName,
+      'rootFieldName': operationName + 'Create',
       'operationType': 'mutation',
-      'operationName': type.modelName + 'Create'
+      'operationName': operationName + 'Create'
     });
   },
 
@@ -168,23 +171,24 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   updateRecord: function(store, type, snapshot) {
-    var data = {};
-    var serializer = store.serializerFor(type.modelName);
+    let data = {};
+    let serializer = store.serializerFor(type.modelName);
+    let operationName = this._normalizeModelName(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
     // I don't think this changeset thing will work if you update relations
-    var payload = { id: data['id'] };
+    let payload = { id: data['id'] };
     Object.keys(snapshot.changedAttributes()).forEach((key) => {
       payload[key] = data[key];
     });
 
     return this.request(store, type, {
       'rootFieldQuery': payload,
-      'rootFieldAlias': type.modelName,
-      'rootFieldName': type.modelName + 'Update',
+      'rootFieldAlias': operationName,
+      'rootFieldName': operationName + 'Update',
       'operationType': 'mutation',
-      'operationName': type.modelName + 'Update'
+      'operationName': operationName + 'Update'
     });
   },
 
@@ -201,13 +205,14 @@ export default DS.Adapter.extend({
   */
   deleteRecord: function(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
+    let operationName = this._normalizeModelName(type.modelName);
 
     return this.request(store, type, {
-      'rootFieldName': type.modelName + 'Delete',
-      'rootFieldAlias': type.modelName,
+      'rootFieldName': operationName + 'Delete',
+      'rootFieldAlias': operationName,
       'rootFieldQuery': { 'id': data.id },
       'operationType': 'mutation',
-      'operationName': type.modelName + 'Delete'
+      'operationName': operationName + 'Delete'
     });
   },
 
@@ -353,6 +358,10 @@ export default DS.Adapter.extend({
       return payload;
     }
   },
+
+  _normalizeModelName: function(modelName) {
+    return Ember.String.camelize(modelName);
+  }
 });
 
 function parseResponseHeaders(headerStr) {
