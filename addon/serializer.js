@@ -64,7 +64,7 @@ export default DS.JSONAPISerializer.extend({
   normalizeResponse: function(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
     const documentHash = { 'data': [], 'included': [] };
-    const type = primaryModelClass.modelName;
+    const type = Ember.String.camelize(primaryModelClass.modelName);
     const root = data[type] || data[Ember.String.pluralize(type)];
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
 

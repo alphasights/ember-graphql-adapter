@@ -6,7 +6,7 @@ import Adapter from 'ember-graphql-adapter';
 var env, store, adapter;
 var passedUrl, passedQuery;
 var run = Ember.run;
-var Post, Comment;
+var Post, Comment, PostCategory;
 
 module("integration/adapter - GraphQL adapter", {
   beforeEach: function() {
@@ -18,10 +18,15 @@ module("integration/adapter - GraphQL adapter", {
       name: DS.attr('string')
     });
 
+    PostCategory = DS.Model.extend({
+      name: DS.attr('string')
+    });
+
     env = setupStore({
       adapter: Adapter.extend({ endpoint: '/graph' }),
       post: Post,
-      comment: Comment
+      comment: Comment,
+      postCategory: PostCategory
     });
 
     store = env.store;
@@ -271,6 +276,29 @@ test('deleteRecord - deletes existing record', function(assert) {
       assert.equal(passedQuery, 'mutation postDelete { post: postDelete(id: "1") { id name } }');
 
       assert.equal(store.peekAll('post').get('length'), 0);
+    });
+  });
+});
+
+test('Compound words are camelized', function(assert) {
+  assert.expect(4);
+
+  ajaxResponse({
+    data: {
+      postCategory: {
+        id: '1',
+        name: 'Tutorials'
+      }
+    }
+  });
+
+  run(function() {
+    store.findRecord('postCategory', 1).then(function(post) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query postCategory { postCategory(id: "1") { id name } }');
+
+      assert.equal(post.get('id'), '1');
+      assert.equal(post.get('name'), 'Tutorials');
     });
   });
 });
