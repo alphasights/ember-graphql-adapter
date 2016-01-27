@@ -7,7 +7,11 @@ import StoreDouble from '../helpers/store-double';
 
 module('unit:ember-graphql-adapter/parser', {
   setup: function() {
-    let projectModel = new ModelDouble('projects', ['status', 'name'], ['user']);
+    let projectModel = new ModelDouble(
+      'projects',
+      ['status', 'name'],
+      [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
+    );
     let userModel = new ModelDouble('user', ['name']);
     let store = new StoreDouble({ 'project': projectModel, 'user': userModel });
 

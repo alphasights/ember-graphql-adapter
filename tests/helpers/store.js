@@ -55,6 +55,7 @@ export default function setupStore(options) {
   registry.register('serializer:-graphql', Serializer);
 
   registry.register('transform:string', DS.StringTransform);
+  registry.register('transform:number', DS.NumberTransform);
 
   env.restSerializer = container.lookup('serializer:-rest');
   env.store = container.lookup('service:store');

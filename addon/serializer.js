@@ -15,7 +15,7 @@ export default DS.JSONAPISerializer.extend({
       this.__serializeAttribute(snapshot, data, key, attribute);
     });
 
-    snapshot.eachRelationship((key, relationship) => {
+    snapshot.eachRelationship((relName, relationship) => {
       if (relationship.kind === 'belongsTo') {
         this.__serializeBelongsTo(snapshot, data, relationship);
       } else if (relationship.kind === 'hasMany') {
@@ -66,6 +66,7 @@ export default DS.JSONAPISerializer.extend({
     const documentHash = { 'data': [], 'included': [] };
     const type = Ember.String.camelize(primaryModelClass.modelName);
     const root = data[type] || data[Ember.String.pluralize(type)];
+
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
 
     const singular = requestType.match(/^.*Record$/) || requestType === 'belongsTo';
@@ -79,13 +80,15 @@ export default DS.JSONAPISerializer.extend({
         'relationships': this.__extractRelationships(primaryModelClass, item)
       });
 
-      primaryModelClass.eachRelationship((key) => {
-        let includes = item[key];
+      primaryModelClass.eachRelationship((relName, {kind, type}) => {
+        let includes = item[relName];
         if (!includes) { return; }
 
-        if (Ember.typeOf(includes) !== 'array') { includes = [includes]; }
+        if (Ember.typeOf(includes) !== 'array') {
+          includes = [includes];
+        }
 
-        const includeModelClass = store.modelFor(Ember.String.singularize(key));
+        const includeModelClass = store.modelFor(type);
         const serializer = store.serializerFor(includeModelClass.modelName);
 
         includes = this.__normalizeIncludes(store, includes, includeModelClass, serializer);
@@ -127,27 +130,43 @@ export default DS.JSONAPISerializer.extend({
   __extractRelationships: function(modelClass, resourceHash) {
     const relationships = {};
 
-    modelClass.eachRelationship((key) => {
-      const relHash = resourceHash[key];
-      if (!relHash) { return; }
-
+    modelClass.eachRelationship((relName, {kind, type, options}) => {
       let data;
-      if (Ember.typeOf(relHash) === 'array') {
-        data = relHash.map((item) => this.__createRelationship(item['id'], key));
+
+      if (options.async) {
+        let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
+        let key = Ember.String.singularize(relName) + suffix;
+        data = this.__buildRelationships(type, resourceHash[key], (elem) => elem);
       } else {
-        data = this.__createRelationship(relHash['id'], key);
+        data = this.__buildRelationships(type, resourceHash[relName], (elem) => elem.id);
       }
 
-      relationships[this.keyForRelationship(key)] = { 'data': data };
+      if (Ember.isPresent(data)) {
+        relationships[this.keyForRelationship(relName)] = { 'data': data };
+      }
     });
 
     return relationships;
   },
 
-  __createRelationship: function(id, key) {
+  __buildRelationships: function(type, collection, extractIdFn) {
+    if (!collection) {
+      return;
+    }
+
+    if (Ember.typeOf(collection) !== 'array') {
+      return this.__buildRelationship(extractIdFn(collection), type);
+    } else {
+      return collection.map((elem) => {
+        return this.__buildRelationship(extractIdFn(elem), type);
+      });
+    }
+  },
+
+  __buildRelationship: function(id, type) {
     return {
       'id': id,
-      'type': Ember.String.singularize(key)
+      'type': type
     };
   },
 

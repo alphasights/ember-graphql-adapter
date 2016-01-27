@@ -1,7 +1,16 @@
+import Ember from 'ember';
+
+let MockObject = Ember.Object.extend({
+  has: function() {
+    return true;
+  }
+});
+
 export default function SnapshotDouble(modelName, attributes, relationships) {
-  this.attributes = attributes || {};
-  this.relationships = relationships || {};
+  this.attributes = MockObject.create(attributes || {});
+  this.relationships = MockObject.create(relationships || {});
   this.modelName = modelName;
+  this.type = this;
 
   this.eachAttribute = function(cb, binding) {
     let attrs = Object.keys(this.attributes);

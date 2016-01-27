@@ -10,21 +10,30 @@ export default {
       rootField.selectionSet.push(field);
     });
 
-    model.eachRelationship((rel) => {
-      let relModel = store.modelFor(Ember.String.singularize(rel));
-      let field = new Type.Field(
-        rel,
-        null,
-        new Type.ArgumentSet(),
-        new Type.SelectionSet(new Type.Field('id'))
-      );
+    model.eachRelationship((relName, {kind, type, options}) => {
+      if (options.async) {
+        let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
+        let field = new Type.Field(Ember.String.singularize(relName) + suffix);
+        rootField.selectionSet.push(field);
+      } else {
+        let relModel = store.modelFor(type);
+        let modelName = kind === 'hasMany' ? Ember.String.pluralize(type) : type;
+        let alias = modelName !== relName && relName;
 
-      relModel.eachAttribute(function(attr) {
-        let relField = new Type.Field(attr);
-        field.selectionSet.push(relField);
-      });
+        let field = new Type.Field(
+          modelName,
+          alias,
+          new Type.ArgumentSet(),
+          new Type.SelectionSet(new Type.Field('id'))
+        );
 
-      rootField.selectionSet.push(field);
+        relModel.eachAttribute(function(attr) {
+          let relField = new Type.Field(attr);
+          field.selectionSet.push(relField);
+        });
+
+        rootField.selectionSet.push(field);
+      }
     });
 
     operation.selectionSet.push(rootField);
