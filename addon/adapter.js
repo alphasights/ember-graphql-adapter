@@ -4,6 +4,7 @@ import Compiler from './compiler';
 
 export default DS.Adapter.extend({
   endpoint: null,
+  httpMethod: 'GET',
   param: 'query',
   defaultSerializer: '-graphql',
   coalesceFindRequests: false,
@@ -12,7 +13,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch the JSON for a given
     type and ID.
 
-    The `findRecord` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `findRecord` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     @method findRecord
@@ -36,7 +37,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch a JSON array for all
     of the records for a given type.
 
-    The `findAll` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `findAll` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     @method findAll
@@ -60,7 +61,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch JSON for
     the records that match a particular query.
 
-    The `query` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `query` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     The `query` argument is a simple JavaScript object that will be
@@ -88,7 +89,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch JSON for a single record that
     matches a particular query.
 
-    The `query` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `query` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     The `query` argument is a simple JavaScript object that will be
@@ -162,7 +163,7 @@ export default DS.Adapter.extend({
     Called by the store when an existing record is saved
     via the `save` method on a model record instance.
 
-    The `updateRecord` method  makes an Ajax (HTTP GET) request to the GraphQL endpoint.
+    The `updateRecord` method  makes an Ajax request to the GraphQL endpoint.
 
     @method updateRecord
     @param {DS.Store} store
@@ -195,7 +196,7 @@ export default DS.Adapter.extend({
   /**
     Called by the store when a record is deleted.
 
-    The `deleteRecord` method  makes an Ajax (HTTP GET) request to the GraphQL endpoint.
+    The `deleteRecord` method  makes an Ajax request to the GraphQL endpoint.
 
     @method deleteRecord
     @param {DS.Store} store
@@ -311,6 +312,7 @@ export default DS.Adapter.extend({
       'url': url,
       'dataType': 'json',
       'data': data,
+      'type': this.httpMethod,
       'type': 'GET',
       'context': this
     };
