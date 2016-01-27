@@ -17,7 +17,8 @@ export default {
         rootField.selectionSet.push(field);
       } else {
         let relModel = store.modelFor(type);
-        let modelName = kind === 'hasMany' ? Ember.String.pluralize(type) : type;
+        let camelizedType = Ember.String.camelize(type);
+        let modelName = kind === 'hasMany' ? Ember.String.pluralize(camelizedType) : camelizedType;
         let alias = modelName !== relName && relName;
 
         let field = new Type.Field(

@@ -281,9 +281,10 @@ test('deleteRecord - deletes existing record', function(assert) {
 });
 
 test('Synchronous relationships are included', function(assert) {
-  assert.expect(8);
+  assert.expect(10);
 
   Post.reopen({
+    postCategory: DS.belongsTo('postCategory', { async: false }),
     comments: DS.hasMany('comment', { async: false }),
     topComments: DS.hasMany('comment', { async: false })
   });
@@ -293,6 +294,7 @@ test('Synchronous relationships are included', function(assert) {
       post: {
         id: '1',
         name: 'Ember.js rocks',
+        postCategory: { id: '1', name: 'Tutorials' },
         comments: [
           { id: '1', name: 'FIRST' }
         ],
@@ -306,10 +308,13 @@ test('Synchronous relationships are included', function(assert) {
   run(function() {
     store.findRecord('post', 1).then(function(post) {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post { post(id: "1") { id name comments { id name } topComments: comments { id name } } }');
+      assert.equal(passedQuery, 'query post { post(id: "1") { id name postCategory { id name } comments { id name } topComments: comments { id name } } }');
 
       assert.equal(post.get('id'), '1');
       assert.equal(post.get('name'), 'Ember.js rocks');
+
+      assert.equal(post.get('postCategory.id'), '1');
+      assert.equal(post.get('postCategory.name'), 'Tutorials');
 
       assert.equal(post.get('comments.firstObject.id'), '1');
       assert.equal(post.get('comments.firstObject.name'), 'FIRST');
