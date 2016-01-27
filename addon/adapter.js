@@ -313,7 +313,6 @@ export default DS.Adapter.extend({
       'dataType': 'json',
       'data': data,
       'type': this.httpMethod,
-      'type': 'GET',
       'context': this
     };
 
