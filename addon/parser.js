@@ -2,11 +2,11 @@ import * as Type from 'ember-graphql-adapter/types';
 import Ember from 'ember';
 
 export default {
-  parse(model, store, operation, rootField) {
+  parse(model, store, operation, rootField, normalizeCaseFn) {
     rootField.selectionSet.push(new Type.Field('id'));
 
     model.eachAttribute((attr) => {
-      let field = new Type.Field(attr);
+      let field = this._buildField(attr, normalizeCaseFn);
       rootField.selectionSet.push(field);
     });
 
@@ -15,10 +15,10 @@ export default {
       let {type, options} = relationship;
 
       if (options.async) {
-        field = this._buildAsyncRelationship(relName, relationship);
+        field = this._buildAsyncRelationship(relName, relationship, normalizeCaseFn);
       } else {
         let relModel = store.modelFor(type);
-        field = this._buildSyncRelationship(relModel, relName, relationship);
+        field = this._buildSyncRelationship(relModel, relName, relationship, normalizeCaseFn);
       }
 
       rootField.selectionSet.push(field);
@@ -29,14 +29,19 @@ export default {
     return operation;
   },
 
-  _buildAsyncRelationship(relName, {kind}) {
-    let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
-    return new Type.Field(Ember.String.singularize(relName) + suffix);
+  _buildField(attr, normalizeCaseFn) {
+    return new Type.Field(normalizeCaseFn(attr));
   },
 
-  _buildSyncRelationship(relModel, relName, {kind, type}) {
-    let normalizedType = this._getNormalizedType(kind, type);
-    let aliasedNameOrNull = this._getAliasedName(relName, normalizedType);
+  _buildAsyncRelationship(relName, {kind}, normalizeCaseFn) {
+    let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
+    return this._buildField(Ember.String.singularize(relName) + suffix, normalizeCaseFn);
+  },
+
+  _buildSyncRelationship(relModel, relName, {kind, type}, normalizeCaseFn) {
+    let normalizedRelName = normalizeCaseFn(relName);
+    let normalizedType = normalizeCaseFn(this._getInflectedType(kind, type));
+    let aliasedNameOrNull = this._getAliasedName(normalizedRelName, normalizedType);
 
     let field = new Type.Field(
       normalizedType,
@@ -53,18 +58,16 @@ export default {
     return field;
   },
 
-  _getNormalizedType(kind, type) {
-    let camelizedType = Ember.String.camelize(type);
-
+  _getInflectedType(kind, type) {
     if (kind === 'hasMany') {
-      return Ember.String.pluralize(camelizedType);
+      return Ember.String.pluralize(type);
     } else {
-      return camelizedType;
+      return type;
     }
   },
 
-  _getAliasedName(relName, normalizedType) {
-    if (relName !== normalizedType) {
+  _getAliasedName(relName, type) {
+    if (relName !== type) {
       return relName;
     }
   }

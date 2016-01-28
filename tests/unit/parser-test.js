@@ -1,9 +1,14 @@
 import { test, module } from 'qunit';
+import Ember from 'ember';
 import Parser from 'ember-graphql-adapter/parser';
 import * as Type from 'ember-graphql-adapter/types';
 import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
+
+const normalizeCaseFn = function(string) {
+  return Ember.String.camelize(string);
+};
 
 module('unit:ember-graphql-adapter/parser', {
   setup: function() {
@@ -18,7 +23,7 @@ module('unit:ember-graphql-adapter/parser', {
     let rootField = new Type.Field('projects');
     let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
 
-    this.parseTree = Parser.parse(projectModel, store, operation, rootField);
+    this.parseTree = Parser.parse(projectModel, store, operation, rootField, normalizeCaseFn);
   }
 });
 

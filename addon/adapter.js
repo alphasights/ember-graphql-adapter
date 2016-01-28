@@ -9,6 +9,10 @@ export default DS.Adapter.extend({
   defaultSerializer: '-graphql',
   coalesceFindRequests: false,
 
+  normalizeCase: function(string) {
+    return Ember.String.camelize(string);
+  },
+
   /**
     Called by the store in order to fetch the JSON for a given
     type and ID.
@@ -23,7 +27,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findRecord: function(store, type, id) {
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldQuery': { 'id': id },
@@ -46,7 +50,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     let options = {
       'rootFieldName': operationName,
@@ -75,7 +79,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   query: function(store, type, query) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -103,7 +107,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   queryRecord: function(store, type, query) {
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -123,7 +127,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findMany(store, type, ids) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldQuery': { 'ids': ids },
@@ -146,7 +150,7 @@ export default DS.Adapter.extend({
   createRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
@@ -174,7 +178,7 @@ export default DS.Adapter.extend({
   updateRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
@@ -206,7 +210,7 @@ export default DS.Adapter.extend({
   */
   deleteRecord: function(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldName': operationName + 'Delete',
@@ -226,6 +230,7 @@ export default DS.Adapter.extend({
     @return {String} result
   */
   compile: function(store, type, options) {
+    options['normalizeCaseFn'] = this.normalizeCase;
     return Compiler.compile(type, store, options);
   },
 
@@ -358,10 +363,6 @@ export default DS.Adapter.extend({
     } else {
       return payload;
     }
-  },
-
-  _normalizeModelName: function(modelName) {
-    return Ember.String.camelize(modelName);
   }
 });
 

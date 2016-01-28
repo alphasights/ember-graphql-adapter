@@ -432,3 +432,36 @@ test('Resources and attributes with multiple words are camelized', function(asse
     });
   });
 });
+
+test('Resources and attributes with multiple words are snake cased in times of need', function(assert) {
+  assert.expect(5);
+
+  adapter.normalizeCase = function(name) {
+    return Ember.String.underscore(name);
+  };
+
+  PostCategory.reopen({
+    postsCount: DS.attr('number')
+  });
+
+  ajaxResponse({
+    data: {
+      postCategory: {
+        id: '1',
+        name: 'Ember.js rocks',
+        postsCount: '10'
+      }
+    }
+  });
+
+  run(function() {
+    store.findRecord('postCategory', 1).then(function(category) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query post_category { post_category(id: "1") { id name posts_count } }');
+
+      assert.equal(category.get('id'), '1');
+      assert.equal(category.get('name'), 'Ember.js rocks');
+      assert.equal(category.get('postsCount'), 10);
+    });
+  });
+});

@@ -1,9 +1,14 @@
 import { test, module } from 'qunit';
+import Ember from 'ember';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 import Compiler from 'ember-graphql-adapter/compiler';
 
 module('unit:ember-graphql-adapter/compiler');
+
+const normalizeCaseFn = function(string) {
+  return Ember.String.camelize(string);
+};
 
 test("takes an Model and responds with GraphQL query", function(assert) {
   let model = new ModelDouble('project', ['status']);
@@ -15,7 +20,8 @@ test("takes an Model and responds with GraphQL query", function(assert) {
     'rootFieldQuery': {
       'status': 'active',
       'limit': 10
-    }
+    },
+    'normalizeCaseFn': normalizeCaseFn
   };
 
   assert.equal(Compiler.compile(model, store, options), 'query projectsQuery { projects(status: "active", limit: 10) { id status } }');
@@ -31,7 +37,8 @@ test("mutation", function(assert){
     'rootFieldQuery': {
       'name': 'Test Project',
       'status': 'active'
-    }
+    },
+    'normalizeCaseFn': normalizeCaseFn
   };
 
   assert.equal(Compiler.compile(model, store, options), 'mutation projectCreate { projectCreate(name: "Test Project", status: "active") { id name status } }');
@@ -48,7 +55,8 @@ test("mutation with root alias", function(assert){
     'rootFieldQuery': {
       'name': 'Test Project',
       'status': 'active'
-    }
+    },
+    'normalizeCaseFn': normalizeCaseFn
   };
 
   assert.equal(Compiler.compile(model, store, options), 'mutation projectCreate { project: projectCreate(name: "Test Project", status: "active") { id name status } }');
