@@ -50,8 +50,8 @@ export default {
       new Type.SelectionSet(new Type.Field('id'))
     );
 
-    relModel.eachAttribute(function(attr) {
-      let relField = new Type.Field(attr);
+    relModel.eachAttribute((attr) => {
+      let relField = this._buildField(attr, normalizeCaseFn);
       field.selectionSet.push(relField);
     });
 

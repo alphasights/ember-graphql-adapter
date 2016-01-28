@@ -4,6 +4,10 @@ import Ember from 'ember';
 export default DS.JSONAPISerializer.extend({
   isNewSerializerAPI: true,
 
+  normalizeCase: function(string) {
+    return Ember.String.camelize(string);
+  },
+
   serialize: function(snapshot) {
     let data = {};
 
@@ -15,7 +19,7 @@ export default DS.JSONAPISerializer.extend({
       this.__serializeAttribute(snapshot, data, key, attribute);
     });
 
-    snapshot.eachRelationship((relName, relationship) => {
+    snapshot.eachRelationship((_relName, relationship) => {
       if (relationship.kind === 'belongsTo') {
         this.__serializeBelongsTo(snapshot, data, relationship);
       } else if (relationship.kind === 'hasMany') {
@@ -64,7 +68,7 @@ export default DS.JSONAPISerializer.extend({
   normalizeResponse: function(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
     const documentHash = { 'data': [], 'included': [] };
-    const type = Ember.String.camelize(primaryModelClass.modelName);
+    const type = this.normalizeCase(primaryModelClass.modelName);
     const root = data[type] || data[Ember.String.pluralize(type)];
 
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
@@ -81,7 +85,8 @@ export default DS.JSONAPISerializer.extend({
       });
 
       primaryModelClass.eachRelationship((relName, {kind, type}) => {
-        let includes = item[relName];
+        let normalizedRelName = this.normalizeCase(relName);
+        let includes = item[normalizedRelName];
         if (!includes) { return; }
 
         if (Ember.typeOf(includes) !== 'array') {
@@ -121,7 +126,8 @@ export default DS.JSONAPISerializer.extend({
     const attributes = {};
 
     modelClass.eachAttribute((key) => {
-      attributes[serializer.keyForAttribute(key)] = resourceHash[key];
+      let normalizedKey = this.normalizeCase(key);
+      attributes[serializer.keyForAttribute(key)] = resourceHash[normalizedKey];
     });
 
     return attributes;
@@ -136,9 +142,11 @@ export default DS.JSONAPISerializer.extend({
       if (options.async) {
         let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
         let key = Ember.String.singularize(relName) + suffix;
-        data = this.__buildRelationships(type, resourceHash[key], (elem) => elem);
+        let normalizedKey = this.normalizeCase(key);
+        data = this.__buildRelationships(type, resourceHash[normalizedKey], (elem) => elem);
       } else {
-        data = this.__buildRelationships(type, resourceHash[relName], (elem) => elem.id);
+        let normalizedRelName = this.normalizeCase(relName);
+        data = this.__buildRelationships(type, resourceHash[normalizedRelName], (elem) => elem.id);
       }
 
       if (Ember.isPresent(data)) {

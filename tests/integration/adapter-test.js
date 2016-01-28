@@ -1,7 +1,7 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
 import {module, test} from 'qunit';
-import Adapter from 'ember-graphql-adapter';
+import {Adapter, Serializer} from 'ember-graphql-adapter';
 
 var env, store, adapter;
 var passedUrl, passedQuery;
@@ -436,9 +436,15 @@ test('Resources and attributes with multiple words are camelized', function(asse
 test('Resources and attributes with multiple words are snake cased in times of need', function(assert) {
   assert.expect(5);
 
-  adapter.normalizeCase = function(name) {
+  let normalizeCaseFn = function(name) {
     return Ember.String.underscore(name);
   };
+
+  adapter.normalizeCase = normalizeCaseFn;
+
+  env.registry.register('serializer:-graphql', Serializer.extend({
+    normalizeCase: normalizeCaseFn
+  }));
 
   PostCategory.reopen({
     postsCount: DS.attr('number')
@@ -446,10 +452,10 @@ test('Resources and attributes with multiple words are snake cased in times of n
 
   ajaxResponse({
     data: {
-      postCategory: {
+      post_category: {
         id: '1',
         name: 'Ember.js rocks',
-        postsCount: '10'
+        posts_count: '10'
       }
     }
   });
