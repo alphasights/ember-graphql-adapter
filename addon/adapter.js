@@ -4,15 +4,20 @@ import Compiler from './compiler';
 
 export default DS.Adapter.extend({
   endpoint: null,
+  httpMethod: 'GET',
   param: 'query',
   defaultSerializer: '-graphql',
   coalesceFindRequests: false,
+
+  normalizeCase: function(string) {
+    return Ember.String.camelize(string);
+  },
 
   /**
     Called by the store in order to fetch the JSON for a given
     type and ID.
 
-    The `findRecord` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `findRecord` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     @method findRecord
@@ -22,7 +27,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findRecord: function(store, type, id) {
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldQuery': { 'id': id },
@@ -36,7 +41,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch a JSON array for all
     of the records for a given type.
 
-    The `findAll` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `findAll` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     @method findAll
@@ -45,7 +50,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     let options = {
       'rootFieldName': operationName,
@@ -60,7 +65,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch JSON for
     the records that match a particular query.
 
-    The `query` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `query` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     The `query` argument is a simple JavaScript object that will be
@@ -74,7 +79,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   query: function(store, type, query) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -88,7 +93,7 @@ export default DS.Adapter.extend({
     Called by the store in order to fetch JSON for a single record that
     matches a particular query.
 
-    The `query` method makes an Ajax (HTTP GET) request to the GraphQL
+    The `query` method makes an Ajax request to the GraphQL
     endpoint, and returns a promise for the resulting payload.
 
     The `query` argument is a simple JavaScript object that will be
@@ -102,7 +107,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   queryRecord: function(store, type, query) {
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldName': operationName,
@@ -122,7 +127,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findMany(store, type, ids) {
-    let operationName = this._normalizeModelName(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
       'rootFieldQuery': { 'ids': ids },
@@ -145,7 +150,7 @@ export default DS.Adapter.extend({
   createRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
@@ -162,7 +167,7 @@ export default DS.Adapter.extend({
     Called by the store when an existing record is saved
     via the `save` method on a model record instance.
 
-    The `updateRecord` method  makes an Ajax (HTTP GET) request to the GraphQL endpoint.
+    The `updateRecord` method  makes an Ajax request to the GraphQL endpoint.
 
     @method updateRecord
     @param {DS.Store} store
@@ -173,7 +178,7 @@ export default DS.Adapter.extend({
   updateRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
@@ -195,7 +200,7 @@ export default DS.Adapter.extend({
   /**
     Called by the store when a record is deleted.
 
-    The `deleteRecord` method  makes an Ajax (HTTP GET) request to the GraphQL endpoint.
+    The `deleteRecord` method  makes an Ajax request to the GraphQL endpoint.
 
     @method deleteRecord
     @param {DS.Store} store
@@ -205,7 +210,7 @@ export default DS.Adapter.extend({
   */
   deleteRecord: function(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
-    let operationName = this._normalizeModelName(type.modelName);
+    let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
       'rootFieldName': operationName + 'Delete',
@@ -225,6 +230,7 @@ export default DS.Adapter.extend({
     @return {String} result
   */
   compile: function(store, type, options) {
+    options['normalizeCaseFn'] = this.normalizeCase;
     return Compiler.compile(type, store, options);
   },
 
@@ -311,7 +317,7 @@ export default DS.Adapter.extend({
       'url': url,
       'dataType': 'json',
       'data': data,
-      'type': 'GET',
+      'type': this.httpMethod,
       'context': this
     };
 
@@ -357,10 +363,6 @@ export default DS.Adapter.extend({
     } else {
       return payload;
     }
-  },
-
-  _normalizeModelName: function(modelName) {
-    return Ember.String.camelize(modelName);
   }
 });
 

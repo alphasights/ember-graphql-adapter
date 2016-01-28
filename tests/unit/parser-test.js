@@ -1,20 +1,29 @@
 import { test, module } from 'qunit';
+import Ember from 'ember';
 import Parser from 'ember-graphql-adapter/parser';
 import * as Type from 'ember-graphql-adapter/types';
 import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 
+const normalizeCaseFn = function(string) {
+  return Ember.String.camelize(string);
+};
+
 module('unit:ember-graphql-adapter/parser', {
   setup: function() {
-    let projectModel = new ModelDouble('projects', ['status', 'name'], ['user']);
+    let projectModel = new ModelDouble(
+      'projects',
+      ['status', 'name'],
+      [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
+    );
     let userModel = new ModelDouble('user', ['name']);
     let store = new StoreDouble({ 'project': projectModel, 'user': userModel });
 
     let rootField = new Type.Field('projects');
     let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
 
-    this.parseTree = Parser.parse(projectModel, store, operation, rootField);
+    this.parseTree = Parser.parse(projectModel, store, operation, rootField, normalizeCaseFn);
   }
 });
 

@@ -1,7 +1,7 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
 import {module, test} from 'qunit';
-import Adapter from 'ember-graphql-adapter';
+import {Adapter, Serializer} from 'ember-graphql-adapter';
 
 var env, store, adapter;
 var passedUrl, passedQuery;
@@ -280,25 +280,194 @@ test('deleteRecord - deletes existing record', function(assert) {
   });
 });
 
-test('Compound words are camelized', function(assert) {
-  assert.expect(4);
+test('Synchronous relationships are included', function(assert) {
+  assert.expect(10);
+
+  Post.reopen({
+    postCategory: DS.belongsTo('postCategory', { async: false }),
+    comments: DS.hasMany('comment', { async: false }),
+    topComments: DS.hasMany('comment', { async: false })
+  });
 
   ajaxResponse({
     data: {
-      postCategory: {
+      post: {
         id: '1',
-        name: 'Tutorials'
+        name: 'Ember.js rocks',
+        postCategory: { id: '1', name: 'Tutorials' },
+        comments: [
+          { id: '1', name: 'FIRST' }
+        ],
+        topComments: [
+          { id: '2', name: 'SECOND' }
+        ]
       }
     }
   });
 
   run(function() {
-    store.findRecord('postCategory', 1).then(function(post) {
+    store.findRecord('post', 1).then(function(post) {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query postCategory { postCategory(id: "1") { id name } }');
+      assert.equal(passedQuery, 'query post { post(id: "1") { id name postCategory { id name } comments { id name } topComments: comments { id name } } }');
 
       assert.equal(post.get('id'), '1');
-      assert.equal(post.get('name'), 'Tutorials');
+      assert.equal(post.get('name'), 'Ember.js rocks');
+
+      assert.equal(post.get('postCategory.id'), '1');
+      assert.equal(post.get('postCategory.name'), 'Tutorials');
+
+      assert.equal(post.get('comments.firstObject.id'), '1');
+      assert.equal(post.get('comments.firstObject.name'), 'FIRST');
+
+      assert.equal(post.get('topComments.firstObject.id'), '2');
+      assert.equal(post.get('topComments.firstObject.name'), 'SECOND');
+    });
+  });
+});
+
+test('Asynchronous relationships only include ids', function(assert) {
+  assert.expect(10);
+
+  run(function() {
+    store.push({
+      data: {
+        type: 'comment',
+        id: '1',
+        attributes: {
+          name: 'FIRST'
+        }
+      }
+    });
+
+    store.push({
+      data: {
+        type: 'comment',
+        id: '2',
+        attributes: {
+          name: 'SECOND'
+        }
+      }
+    });
+
+    store.push({
+      data: {
+        type: 'post-category',
+        id: '1',
+        attributes: {
+          name: 'Tutorials'
+        }
+      }
+    });
+  });
+
+  Post.reopen({
+    postCategory: DS.belongsTo('postCategory', { async: true }),
+    comments: DS.hasMany('comment', { async: true }),
+    topComments: DS.hasMany('comment', { async: true })
+  });
+
+  ajaxResponse({
+    data: {
+      post: {
+        id: '1',
+        name: 'Ember.js rocks',
+        postCategoryId: 1,
+        commentIds: [1],
+        topCommentIds: [2]
+      }
+    }
+  });
+
+  run(function() {
+    store.findRecord('post', 1).then(function(post) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query post { post(id: "1") { id name postCategoryId commentIds topCommentIds } }');
+
+      assert.equal(post.get('id'), '1');
+      assert.equal(post.get('name'), 'Ember.js rocks');
+
+      post.get('postCategory').then(function(category) {
+        assert.equal(category.get('id'), '1');
+        assert.equal(category.get('name'), 'Tutorials');
+      });
+
+      post.get('comments').then(function(comments) {
+        assert.equal(comments.get('firstObject.id'), '1');
+        assert.equal(comments.get('firstObject.name'), 'FIRST');
+      });
+
+      post.get('topComments').then(function(comments) {
+        assert.equal(comments.get('firstObject.id'), '2');
+        assert.equal(comments.get('firstObject.name'), 'SECOND');
+      });
+    });
+  });
+});
+
+test('Resources and attributes with multiple words are camelized', function(assert) {
+  assert.expect(5);
+
+  PostCategory.reopen({
+    postsCount: DS.attr('number')
+  });
+
+  ajaxResponse({
+    data: {
+      postCategory: {
+        id: '1',
+        name: 'Ember.js rocks',
+        postsCount: '10'
+      }
+    }
+  });
+
+  run(function() {
+    store.findRecord('postCategory', 1).then(function(category) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query postCategory { postCategory(id: "1") { id name postsCount } }');
+
+      assert.equal(category.get('id'), '1');
+      assert.equal(category.get('name'), 'Ember.js rocks');
+      assert.equal(category.get('postsCount'), 10);
+    });
+  });
+});
+
+test('Resources and attributes with multiple words are snake cased in times of need', function(assert) {
+  assert.expect(5);
+
+  let normalizeCaseFn = function(name) {
+    return Ember.String.underscore(name);
+  };
+
+  adapter.normalizeCase = normalizeCaseFn;
+
+  env.registry.register('serializer:-graphql', Serializer.extend({
+    normalizeCase: normalizeCaseFn
+  }));
+
+  PostCategory.reopen({
+    postsCount: DS.attr('number')
+  });
+
+  ajaxResponse({
+    data: {
+      post_category: {
+        id: '1',
+        name: 'Ember.js rocks',
+        posts_count: '10'
+      }
+    }
+  });
+
+  run(function() {
+    store.findRecord('postCategory', 1).then(function(category) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query post_category { post_category(id: "1") { id name posts_count } }');
+
+      assert.equal(category.get('id'), '1');
+      assert.equal(category.get('name'), 'Ember.js rocks');
+      assert.equal(category.get('postsCount'), 10);
     });
   });
 });
