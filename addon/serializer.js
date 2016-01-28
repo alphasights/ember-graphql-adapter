@@ -149,17 +149,17 @@ export default DS.JSONAPISerializer.extend({
     return relationships;
   },
 
-  __buildRelationships: function(type, collection, extractIdFn) {
-    if (!collection) {
+  __buildRelationships: function(type, data, extractIdFn) {
+    if (!data) {
       return;
     }
 
-    if (Ember.typeOf(collection) !== 'array') {
-      return this.__buildRelationship(extractIdFn(collection), type);
-    } else {
-      return collection.map((elem) => {
+    if (Ember.typeOf(data) === 'array') {
+      return data.map((elem) => {
         return this.__buildRelationship(extractIdFn(elem), type);
       });
+    } else {
+      return this.__buildRelationship(extractIdFn(data), type);
     }
   },
 
