@@ -1,5 +1,6 @@
 import { test, module } from 'qunit';
 import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
+import Argument from 'ember-graphql-adapter/types/argument';
 
 module('unit:ember-graphql-adapter/types/argument-set');
 
@@ -30,6 +31,14 @@ test("it can be iterated over", function(assert) {
   assert.equal(acc[1], 2);
 });
 
+test("it will filter out Arguments with a null value", function(assert) {
+  let set = new ArgumentSet();
+  set.push(new Argument("status", null));
+
+  assert.equal(set.length, 0);
+});
+
+
 test("it can be made from a query", function(assert) {
   let set = ArgumentSet.fromQuery({ status: 'active', limit: 10 });
 
@@ -38,6 +47,14 @@ test("it can be made from a query", function(assert) {
   assert.equal(set[0].value, 'active');
   assert.equal(set[1].name, 'limit');
   assert.equal(set[1].value, 10);
+});
+
+test("filters out null arguments", function(assert) {
+  let set = ArgumentSet.fromQuery({ status: null, limit: 10 });
+
+  assert.equal(set.length, 1);
+  assert.equal(set[0].name, 'limit');
+  assert.equal(set[0].value, 10);
 });
 
 test("it can be made from a nested query", function(assert) {

@@ -7,6 +7,12 @@ export default class ArgumentSet extends Array {
     this.push(...args);
   }
 
+  push(...args) {
+    super.push(...args.filter((arg) => {
+      return Ember.typeOf(arg.value) !== 'null';
+    }));
+  }
+
   static fromQuery(query) {
     let set = new ArgumentSet();
 
