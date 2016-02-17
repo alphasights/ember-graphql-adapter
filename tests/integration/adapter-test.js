@@ -454,7 +454,7 @@ test('Resources and attributes with multiple words are snake cased in times of n
     data: {
       post_category: {
         id: '1',
-        name: 'Ember.js rocks',
+        name: 'Tutorials',
         posts_count: '10'
       }
     }
@@ -466,8 +466,43 @@ test('Resources and attributes with multiple words are snake cased in times of n
       assert.equal(passedQuery, 'query post_category { post_category(id: "1") { id name posts_count } }');
 
       assert.equal(category.get('id'), '1');
-      assert.equal(category.get('name'), 'Ember.js rocks');
+      assert.equal(category.get('name'), 'Tutorials');
       assert.equal(category.get('postsCount'), 10);
+    });
+  });
+});
+
+test('Mutation names can be snake cased too', function(assert) {
+  assert.expect(4);
+
+  let normalizeCaseFn = function(name) {
+    return Ember.String.underscore(name);
+  };
+
+  adapter.normalizeCase = normalizeCaseFn;
+
+  env.registry.register('serializer:-graphql', Serializer.extend({
+    normalizeCase: normalizeCaseFn
+  }));
+
+  ajaxResponse({
+    data: {
+      post_category: {
+        id: '1',
+        name: 'Tutorials'
+      }
+    }
+  });
+
+  run(function() {
+    let category = store.createRecord('postCategory', { name: 'Tutorials' });
+
+    category.save().then(function(category) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, `mutation post_category_create { post_category: post_category_create(name: "Tutorials") { id name } }`);
+
+      assert.equal(category.get('id'), '1');
+      assert.equal(category.get('name'), 'Tutorials');
     });
   });
 });
