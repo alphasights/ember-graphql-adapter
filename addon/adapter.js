@@ -9,6 +9,13 @@ export default DS.Adapter.extend({
   defaultSerializer: '-graphql',
   coalesceFindRequests: false,
 
+  /**
+    This function controls the normalization of all compound words.
+
+    @method normalizeCase
+    @param {String} string
+    @return {String} string
+  */
   normalizeCase: function(string) {
     return Ember.String.camelize(string);
   },
@@ -30,10 +37,10 @@ export default DS.Adapter.extend({
     let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
-      'rootFieldQuery': { 'id': id },
-      'rootFieldName': operationName,
+      'operationName': operationName,
       'operationType': 'query',
-      'operationName': operationName
+      'rootFieldName': operationName,
+      'rootFieldQuery': { 'id': id }
     });
   },
 
@@ -52,13 +59,11 @@ export default DS.Adapter.extend({
   findAll: function(store, type) {
     let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
-    let options = {
-      'rootFieldName': operationName,
+    return this.request(store, type, {
       'operationName': operationName,
-      'operationType': 'query'
-    };
-
-    return this.request(store, type, options);
+      'operationType': 'query',
+      'rootFieldName': operationName
+    });
   },
 
   /**
@@ -82,10 +87,10 @@ export default DS.Adapter.extend({
     let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
-      'rootFieldName': operationName,
-      'rootFieldQuery': query,
+      'operationName': operationName,
       'operationType': 'query',
-      'operationName': operationName
+      'rootFieldName': operationName,
+      'rootFieldQuery': query
     });
   },
 
@@ -110,10 +115,10 @@ export default DS.Adapter.extend({
     let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
-      'rootFieldName': operationName,
-      'rootFieldQuery': query,
+      'operationName': operationName,
       'operationType': 'query',
-      'operationName': operationName
+      'rootFieldName': operationName,
+      'rootFieldQuery': query
     });
   },
 
@@ -130,10 +135,10 @@ export default DS.Adapter.extend({
     let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
 
     return this.request(store, type, {
-      'rootFieldQuery': { 'ids': ids },
-      'rootFieldName': operationName,
+      'operationName': operationName,
       'operationType': 'query',
-      'operationName': operationName
+      'rootFieldName': operationName,
+      'rootFieldQuery': { 'ids': ids }
     });
   },
 
@@ -150,16 +155,17 @@ export default DS.Adapter.extend({
   createRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this.normalizeCase(type.modelName);
+    let modelName = this.normalizeCase(type.modelName);
+    let operationName = this.normalizeCase(`${modelName}Create`);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
     return this.request(store, type, {
-      'rootFieldQuery': data,
-      'rootFieldAlias': operationName,
-      'rootFieldName': operationName + 'Create',
+      'operationName': operationName,
       'operationType': 'mutation',
-      'operationName': operationName + 'Create'
+      'rootFieldAlias': modelName,
+      'rootFieldName': operationName,
+      'rootFieldQuery': data
     });
   },
 
@@ -178,22 +184,22 @@ export default DS.Adapter.extend({
   updateRecord: function(store, type, snapshot) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
-    let operationName = this.normalizeCase(type.modelName);
+    let modelName = this.normalizeCase(type.modelName);
+    let operationName = this.normalizeCase(`${modelName}Update`);
 
     serializer.serializeIntoHash(data, type, snapshot);
 
-    // I don't think this changeset thing will work if you update relations
     let payload = { id: data['id'] };
     Object.keys(snapshot.changedAttributes()).forEach((key) => {
       payload[key] = data[key];
     });
 
     return this.request(store, type, {
-      'rootFieldQuery': payload,
-      'rootFieldAlias': operationName,
-      'rootFieldName': operationName + 'Update',
+      'operationName': operationName,
       'operationType': 'mutation',
-      'operationName': operationName + 'Update'
+      'rootFieldAlias': modelName,
+      'rootFieldName': operationName,
+      'rootFieldQuery': payload
     });
   },
 
@@ -210,14 +216,15 @@ export default DS.Adapter.extend({
   */
   deleteRecord: function(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
-    let operationName = this.normalizeCase(type.modelName);
+    let modelName = this.normalizeCase(type.modelName);
+    let operationName = this.normalizeCase(`${modelName}Delete`);
 
     return this.request(store, type, {
-      'rootFieldName': operationName + 'Delete',
-      'rootFieldAlias': operationName,
-      'rootFieldQuery': { 'id': data.id },
+      'operationName': operationName,
       'operationType': 'mutation',
-      'operationName': operationName + 'Delete'
+      'rootFieldAlias': modelName,
+      'rootFieldName': operationName,
+      'rootFieldQuery': { 'id': data.id }
     });
   },
 
