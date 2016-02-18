@@ -217,7 +217,6 @@ test('normalizing with synchronous relationships', function(assert) {
   assert.deepEqual(serializer.normalizeResponse(store, postModel, payload, '1', 'findRecord'), expectedNormalization);
 });
 
-
 test("serializes json api style data to a query usable as an ArgumentSet", function(assert) {
   let serializer = new Serializer();
   serializer.container = new ContainerDouble({
@@ -227,7 +226,8 @@ test("serializes json api style data to a query usable as an ArgumentSet", funct
   let expected = {
     'title': 'The title',
     'body': 'The body',
-    'author_id': '1'
+    'authorId': '1',
+    'postIds': ['1']
   };
 
   let projectAttrs = {
@@ -236,7 +236,8 @@ test("serializes json api style data to a query usable as an ArgumentSet", funct
   };
 
   let projectRels = {
-    author: { kind: 'belongsTo', key: 'author', data: { id: '1', modelName: 'user' } }
+    author: { kind: 'belongsTo', key: 'author', data: { id: '1', modelName: 'user' } },
+    posts: { kind: 'hasMany', key: 'posts', data: [{ id: '1', modelName: 'post' }] },
   };
 
   assert.deepEqual(serializer.serialize(new SnapshotDouble('project', projectAttrs, projectRels)), expected);
