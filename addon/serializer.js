@@ -2,11 +2,13 @@ import DS from 'ember-data';
 import Ember from 'ember';
 
 const {
-  camelize,
-  singularize,
-  pluralize,
-  underscore
-} = Ember.String;
+  String: {
+    camelize,
+    singularize,
+    pluralize,
+    underscore
+  }
+} = Ember;
 
 export default DS.JSONAPISerializer.extend({
   isNewSerializerAPI: true,
@@ -38,13 +40,13 @@ export default DS.JSONAPISerializer.extend({
   },
 
   __serializeBelongsTo: function(snapshot, data, relationship) {
-    var key = relationship.key;
+    let key = relationship.key;
 
     if (this._canSerialize(key)) {
-      var belongsTo = snapshot.belongsTo(key);
+      let belongsTo = snapshot.belongsTo(key);
 
       if (belongsTo !== undefined) {
-        var payloadKey = this._getMappedKey(key, snapshot.type);
+        let payloadKey = this._getMappedKey(key, snapshot.type);
         if (payloadKey === key && this.keyForRelationship) {
           payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
         }
@@ -56,13 +58,13 @@ export default DS.JSONAPISerializer.extend({
   },
 
   __serializeHasMany(snapshot, data, relationship) {
-    var key = relationship.key;
+    let key = relationship.key;
 
     if (this._shouldSerializeHasMany(snapshot, key, relationship)) {
-      var hasMany = snapshot.hasMany(key);
+      let hasMany = snapshot.hasMany(key);
 
       if (hasMany !== undefined) {
-        var payloadKey = this._getMappedKey(key, snapshot.type);
+        let payloadKey = this._getMappedKey(key, snapshot.type);
         if (payloadKey === key && this.keyForRelationship) {
           payloadKey = this.keyForRelationship(key, 'hasMany', 'serialize');
         }
@@ -82,7 +84,7 @@ export default DS.JSONAPISerializer.extend({
         let transform = this.transformFor(type);
         value = transform.serialize(value);
       }
-      var payloadKey =  this._getMappedKey(key, snapshot.type);
+      let payloadKey =  this._getMappedKey(key, snapshot.type);
       if (payloadKey === key) {
         payloadKey = this.keyForAttribute(key, 'serialize');
       }
