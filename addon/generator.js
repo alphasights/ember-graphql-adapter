@@ -31,11 +31,11 @@ export default {
     acc = acc + field.name;
 
     if (field.argumentSet.length > 0) {
-      acc = acc + this.argumentSetOpeningToken + this.generateArgumentSet(field.argumentSet) + this.argumentSetClosingToken;
+      acc = acc + `${this.argumentSetOpeningToken}${this.generateArgumentSet(field.argumentSet)}${this.argumentSetClosingToken}`;
     }
 
     if (field.selectionSet.length > 0) {
-      acc = acc + this.openingToken + this.generateSelectionSet(field.selectionSet) + this.closingToken;
+      acc = acc + `${this.openingToken}${this.generateSelectionSet(field.selectionSet)}${this.closingToken}`;
     }
 
     return acc;

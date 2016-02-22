@@ -142,6 +142,23 @@ export default DS.Adapter.extend({
     });
   },
 
+  saveRecord: function(store, type, snapshot, options) {
+    let data = {};
+    let serializer = store.serializerFor(type.modelName);
+    let modelName = this.normalizeCase(type.modelName);
+    let operationName = this.normalizeCase(modelName + options.action);
+
+    serializer.serializeIntoHash(data, type, snapshot);
+
+    return this.request(store, type, {
+      'operationName': operationName,
+      'operationType': 'mutation',
+      'rootFieldAlias': modelName,
+      'rootFieldName': operationName,
+      'rootFieldQuery': data
+    });
+  },
+
   /**
     Called by the store when a newly created record is
     saved via the `save` method on a model record instance.
@@ -153,20 +170,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   createRecord: function(store, type, snapshot) {
-    let data = {};
-    let serializer = store.serializerFor(type.modelName);
-    let modelName = this.normalizeCase(type.modelName);
-    let operationName = this.normalizeCase(`${modelName}Create`);
-
-    serializer.serializeIntoHash(data, type, snapshot);
-
-    return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'mutation',
-      'rootFieldAlias': modelName,
-      'rootFieldName': operationName,
-      'rootFieldQuery': data
-    });
+    return this.saveRecord(store, type, snapshot, { action: 'Create' });
   },
 
   /**
@@ -182,20 +186,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   updateRecord: function(store, type, snapshot) {
-    let data = {};
-    let serializer = store.serializerFor(type.modelName);
-    let modelName = this.normalizeCase(type.modelName);
-    let operationName = this.normalizeCase(`${modelName}Update`);
-
-    serializer.serializeIntoHash(data, type, snapshot);
-
-    return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'mutation',
-      'rootFieldAlias': modelName,
-      'rootFieldName': operationName,
-      'rootFieldQuery': data
-    });
+    return this.saveRecord(store, type, snapshot, { action: 'Update' });
   },
 
   /**
