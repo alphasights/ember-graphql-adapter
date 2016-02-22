@@ -1,11 +1,20 @@
 import DS from 'ember-data';
 import Ember from 'ember';
 
+const {
+  String: {
+    camelize,
+    singularize,
+    pluralize,
+    underscore
+  }
+} = Ember;
+
 export default DS.JSONAPISerializer.extend({
   isNewSerializerAPI: true,
 
   normalizeCase: function(string) {
-    return Ember.String.camelize(string);
+    return camelize(string);
   },
 
   serialize: function(snapshot) {
@@ -31,18 +40,37 @@ export default DS.JSONAPISerializer.extend({
   },
 
   __serializeBelongsTo: function(snapshot, data, relationship) {
-    var key = relationship.key;
+    let key = relationship.key;
 
     if (this._canSerialize(key)) {
-      var belongsTo = snapshot.belongsTo(key);
+      let belongsTo = snapshot.belongsTo(key);
 
-      if (belongsTo) {
-        var payloadKey = this._getMappedKey(key, snapshot.type);
-        if (payloadKey === key) {
+      if (belongsTo !== undefined) {
+        let payloadKey = this._getMappedKey(key, snapshot.type);
+        if (payloadKey === key && this.keyForRelationship) {
           payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
         }
 
-        data[payloadKey + '_id'] = belongsTo.id;
+        let associationKey = this.normalizeCase(`${payloadKey}Id`);
+        data[associationKey] = belongsTo.id;
+      }
+    }
+  },
+
+  __serializeHasMany(snapshot, data, relationship) {
+    let key = relationship.key;
+
+    if (this._shouldSerializeHasMany(snapshot, key, relationship)) {
+      let hasMany = snapshot.hasMany(key);
+
+      if (hasMany !== undefined) {
+        let payloadKey = this._getMappedKey(key, snapshot.type);
+        if (payloadKey === key && this.keyForRelationship) {
+          payloadKey = this.keyForRelationship(key, 'hasMany', 'serialize');
+        }
+
+        let associationKey = this.normalizeCase(`${singularize(payloadKey)}Ids`);
+        data[associationKey] = hasMany.map(el => el.id);
       }
     }
   },
@@ -56,7 +84,7 @@ export default DS.JSONAPISerializer.extend({
         let transform = this.transformFor(type);
         value = transform.serialize(value);
       }
-      var payloadKey =  this._getMappedKey(key, snapshot.type);
+      let payloadKey =  this._getMappedKey(key, snapshot.type);
       if (payloadKey === key) {
         payloadKey = this.keyForAttribute(key, 'serialize');
       }
@@ -69,7 +97,7 @@ export default DS.JSONAPISerializer.extend({
     let data = payload['data'];
     const documentHash = { 'data': [], 'included': [] };
     const type = this.normalizeCase(primaryModelClass.modelName);
-    const root = data[type] || data[Ember.String.pluralize(type)];
+    const root = data[type] || data[pluralize(type)];
 
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
 
@@ -141,7 +169,7 @@ export default DS.JSONAPISerializer.extend({
 
       if (options.async) {
         let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
-        let key = Ember.String.singularize(relName) + suffix;
+        let key = singularize(relName) + suffix;
         let normalizedKey = this.normalizeCase(key);
         data = this.__buildRelationships(type, resourceHash[normalizedKey], (elem) => elem);
       } else {
@@ -179,10 +207,10 @@ export default DS.JSONAPISerializer.extend({
   },
 
   keyForAttribute: function(key) {
-    return Ember.String.underscore(key);
+    return underscore(key);
   },
 
   keyForRelationship: function(key) {
-    return Ember.String.underscore(key);
+    return underscore(key);
   }
 });

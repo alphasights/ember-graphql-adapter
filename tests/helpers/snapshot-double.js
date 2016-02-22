@@ -30,4 +30,11 @@ export default function SnapshotDouble(modelName, attributes, relationships) {
   this.belongsTo = function(key) {
     return this.relationships[key]['data'];
   };
+  this.hasMany = function(key) {
+    return this.relationships[key]['data'];
+  };
+
+  this.determineRelationshipType = function() {
+    return 'manyToMany';
+  };
 }
