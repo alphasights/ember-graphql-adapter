@@ -189,17 +189,12 @@ export default DS.Adapter.extend({
 
     serializer.serializeIntoHash(data, type, snapshot);
 
-    let payload = { id: data['id'] };
-    Object.keys(snapshot.changedAttributes()).forEach((key) => {
-      payload[key] = data[key];
-    });
-
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'mutation',
       'rootFieldAlias': modelName,
       'rootFieldName': operationName,
-      'rootFieldQuery': payload
+      'rootFieldQuery': data
     });
   },
 
