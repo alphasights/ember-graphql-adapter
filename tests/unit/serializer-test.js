@@ -142,9 +142,17 @@ test('normalizing with synchronous relationships', function(assert) {
     ['user', { kind: 'belongsTo', type: 'user', options: { async: false }}],
     ['comments', { kind: 'hasMany', type: 'comment', options: { async: false }}]
   ]);
-  let userModel = new ModelDouble('user', ['email', 'name']);
-  let commentModel = new ModelDouble('comment', ['body']);
-  let store = new StoreDouble({ 'post': postModel, 'user': userModel, 'comment': commentModel });
+  let userModel = new ModelDouble('user', ['email', 'name'], [
+    ['profile', { kind: 'belongsTo', type: 'profile', options: { async: false }}],
+    ['places', { kind: 'hasMany', type: 'place', options: { async: false }}]
+  ]);
+  let commentModel = new ModelDouble('comment', ['body'], [
+    ['replies', { kind: 'hasMany', type: 'reply', options: { async: false }}]
+  ]);
+  let profileModel = new ModelDouble('profile', ['age']);
+  let placeModel = new ModelDouble('place', ['street', 'city', 'country']);
+  let replyModel = new ModelDouble('reply', ['body']);
+  let store = new StoreDouble({ 'post': postModel, 'user': userModel, 'comment': commentModel, 'place': placeModel, 'reply': replyModel, 'profile': profileModel });
   let serializer = new Serializer();
   serializer.store = store;
 
@@ -157,12 +165,44 @@ test('normalizing with synchronous relationships', function(assert) {
         'user': {
           'id': '2',
           'email': 'jjbohn@gmail.com',
-          'name': 'John Bohn'
+          'name': 'John Bohn',
+          'profile': {
+            'id': '11',
+            'age': '30'
+          },
+          'places': [{
+            'id': '5',
+            'street': 'Park Avenue',
+            'city': 'New York, NY',
+            'country': 'United States'
+          }, {
+            'id': '6',
+            'street': 'New Hope Road',
+            'city': 'Raleigh, NC',
+            'country': 'United States'
+          }]
         },
-        'comments': [
-          { 'id': '3', 'body': 'The first comment body' },
-          { 'id': '4', 'body': 'The second comment body' }
-        ]
+        'comments': [{
+          'id': '3',
+          'body': 'The first comment body',
+          'replies': [{
+            'id': '7',
+            'body': 'The first reply to the first comment'
+          }, {
+            'id': '8',
+            'body': 'The second reply to the first comment'
+          }]
+        }, {
+          'id': '4',
+          'body': 'The second comment body',
+          'replies': [{
+            'id': '9',
+            'body': 'The first reply to the second comment'
+          }, {
+            'id': '10',
+            'body': 'The second reply to the second comment'
+          }]
+        }]
       }
     }
   };
@@ -197,6 +237,41 @@ test('normalizing with synchronous relationships', function(assert) {
         'email': 'jjbohn@gmail.com',
         'name': 'John Bohn'
       },
+      'relationships': {
+        'places': {
+          'data': [
+            { 'type': 'place', 'id': '5' },
+            { 'type': 'place', 'id': '6' }
+          ]
+        },
+        'profile': {
+          'data': { 'type': 'profile', 'id': '11' }
+        }
+      }
+    }, {
+      'type': 'profile',
+      'id': '11',
+      'attributes': {
+        'age': '30'
+      },
+      'relationships': {}
+    }, {
+      'type': 'place',
+      'id': '5',
+      'attributes': {
+        'street': 'Park Avenue',
+        'city': 'New York, NY',
+        'country': 'United States'
+      },
+      'relationships': {}
+    }, {
+      'type': 'place',
+      'id': '6',
+      'attributes': {
+        'street': 'New Hope Road',
+        'city': 'Raleigh, NC',
+        'country': 'United States'
+      },
       'relationships': {}
     }, {
       'type': 'comment',
@@ -204,12 +279,54 @@ test('normalizing with synchronous relationships', function(assert) {
       'attributes': {
         'body': 'The first comment body'
       },
+      'relationships': {
+        'replies': {
+          'data': [
+            { 'type': 'reply', 'id': '7' },
+            { 'type': 'reply', 'id': '8' }
+          ]
+        }
+      }
+    }, {
+      'type': 'reply',
+      'id': '7',
+      'attributes': {
+        'body': 'The first reply to the first comment'
+      },
+      'relationships': {}
+    }, {
+      'type': 'reply',
+      'id': '8',
+      'attributes': {
+        'body': 'The second reply to the first comment'
+      },
       'relationships': {}
     }, {
       'type': 'comment',
       'id': '4',
       'attributes': {
         'body': 'The second comment body'
+      },
+      'relationships': {
+        'replies': {
+          'data': [
+            { 'type': 'reply', 'id': '9' },
+            { 'type': 'reply', 'id': '10' }
+          ]
+        }
+      }
+    }, {
+      'type': 'reply',
+      'id': '9',
+      'attributes': {
+        'body': 'The first reply to the second comment'
+      },
+      'relationships': {}
+    }, {
+      'type': 'reply',
+      'id': '10',
+      'attributes': {
+        'body': 'The second reply to the second comment'
       },
       'relationships': {}
     }]
