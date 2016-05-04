@@ -273,7 +273,7 @@ test('deleteRecord - deletes existing record', function(assert) {
 
     post.destroyRecord().then(function() {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postDelete { post: postDelete(id: "1") { id name } }');
+      assert.equal(passedQuery, 'mutation postDelete { post: postDelete(id: "1") { id } }');
 
       assert.equal(store.peekAll('post').get('length'), 0);
     });

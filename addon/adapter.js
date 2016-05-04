@@ -39,6 +39,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'query',
+      'parseSelectionSet': true,
       'rootFieldName': operationName,
       'rootFieldQuery': { 'id': id }
     });
@@ -62,6 +63,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'query',
+      'parseSelectionSet': true,
       'rootFieldName': operationName
     });
   },
@@ -89,6 +91,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'query',
+      'parseSelectionSet': true,
       'rootFieldName': operationName,
       'rootFieldQuery': query
     });
@@ -117,6 +120,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'query',
+      'parseSelectionSet': true,
       'rootFieldName': operationName,
       'rootFieldQuery': query
     });
@@ -137,6 +141,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'query',
+      'parseSelectionSet': true,
       'rootFieldName': operationName,
       'rootFieldQuery': { 'ids': ids }
     });
@@ -153,6 +158,7 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'mutation',
+      'parseSelectionSet': true,
       'rootFieldAlias': modelName,
       'rootFieldName': operationName,
       'rootFieldQuery': data
@@ -208,9 +214,10 @@ export default DS.Adapter.extend({
     return this.request(store, type, {
       'operationName': operationName,
       'operationType': 'mutation',
+      'parseSelectionSet': false,
       'rootFieldAlias': modelName,
       'rootFieldName': operationName,
-      'rootFieldQuery': { 'id': data.id }
+      'rootFieldQuery': { 'id': data.id },
     });
   },
 

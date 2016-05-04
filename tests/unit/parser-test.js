@@ -23,7 +23,10 @@ module('unit:ember-graphql-adapter/parser', {
     let rootField = new Type.Field('projects');
     let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
 
-    this.parseTree = Parser.parse(projectModel, store, operation, rootField, normalizeCaseFn);
+    this.parseTree = Parser.parse(projectModel, store, operation, rootField, {
+      normalizeCaseFn: normalizeCaseFn,
+      parseSelectionSet: true
+    });
   }
 });
 

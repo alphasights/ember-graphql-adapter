@@ -2,31 +2,34 @@ import * as Type from 'ember-graphql-adapter/types';
 import Ember from 'ember';
 
 class Parser {
-  constructor({normalizeCaseFn}) {
+  constructor({normalizeCaseFn, parseSelectionSet}) {
     this.normalizeCaseFn = normalizeCaseFn;
+    this.parseSelectionSet = parseSelectionSet;
   }
 
   parse(model, store, operation, rootField) {
     rootField.selectionSet.push(new Type.Field('id'));
 
-    model.eachAttribute((attr) => {
-      let field = this._buildField(attr);
-      rootField.selectionSet.push(field);
-    });
+    if (this.parseSelectionSet) {
+      model.eachAttribute((attr) => {
+        let field = this._buildField(attr);
+        rootField.selectionSet.push(field);
+      });
 
-    model.eachRelationship((relName, relationship) => {
-      let field;
-      let {type, options} = relationship;
+      model.eachRelationship((relName, relationship) => {
+        let field;
+        let {type, options} = relationship;
 
-      if (options.async) {
-        field = this._buildAsyncRelationship(relName, relationship);
-      } else {
-        let relModel = store.modelFor(type);
-        field = this._buildSyncRelationship(relModel, relName, relationship);
-      }
+        if (options.async) {
+          field = this._buildAsyncRelationship(relName, relationship);
+        } else {
+          let relModel = store.modelFor(type);
+          field = this._buildSyncRelationship(relModel, relName, relationship);
+        }
 
-      rootField.selectionSet.push(field);
-    });
+        rootField.selectionSet.push(field);
+      });
+    }
 
     operation.selectionSet.push(rootField);
 
@@ -78,10 +81,8 @@ class Parser {
 }
 
 export default {
-  parse(model, store, operation, rootField, normalizeCaseFn) {
-    let parser = new Parser({
-      normalizeCaseFn: normalizeCaseFn
-    });
+  parse(model, store, operation, rootField, options) {
+    let parser = new Parser(options);
 
     return parser.parse(model, store, operation, rootField);
   }
