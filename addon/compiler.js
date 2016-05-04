@@ -16,10 +16,8 @@ export default {
     let rootFieldAlias = options['rootFieldAlias'];
     let rootField = new Field(rootFieldName, rootFieldAlias, ArgumentSet.fromQuery(rootFieldQuery));
 
-    let normalizeCaseFn = options['normalizeCaseFn'];
+    Parser.parse(model, store, operation, rootField, options);
 
-    let parseTree = Parser.parse(model, store, operation, rootField, normalizeCaseFn);
-
-    return Generator.generate(parseTree);
+    return Generator.generate(operation);
   }
 };
