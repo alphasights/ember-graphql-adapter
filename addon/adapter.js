@@ -1,6 +1,7 @@
 import DS from 'ember-data';
 import Ember from 'ember';
 import Compiler from './compiler';
+import parseResponseHeaders from 'ember-data/-private/utils/parse-response-headers';
 
 export default DS.Adapter.extend({
   endpoint: null,
@@ -261,45 +262,39 @@ export default DS.Adapter.extend({
 
     return new Ember.RSVP.Promise(function(resolve, reject) {
       options.success = function(payload, textStatus, jqXHR) {
-        let response;
+        let response = adapter.handleResponse(
+          jqXHR.status,
+          parseResponseHeaders(jqXHR.getAllResponseHeaders()),
+          payload,
+          options
+        );
 
-        if (!(response instanceof DS.AdapterError)) {
-          response = adapter.handleResponse(
-            jqXHR.status,
-            parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-            response || payload,
-            options
-          );
-        }
-
-        if (response instanceof DS.AdapterError) {
-          Ember.run(null, reject, response);
+        if (response && response.isAdapterError) {
+          Ember.run.join(null, reject, response);
         } else {
-          Ember.run(null, resolve, response);
+          Ember.run.join(null, resolve, response);
         }
       };
 
       options.error = function(jqXHR, textStatus, errorThrown) {
         let error;
 
-        if (!(error instanceof DS.Error)) {
-          if (errorThrown instanceof Error) {
-            error = errorThrown;
-          } else if (textStatus === 'timeout') {
-            error = new DS.TimeoutError();
-          } else if (textStatus === 'abort') {
-            error = new DS.AbortError();
-          } else {
-            error = adapter.handleResponse(
-              jqXHR.status,
-              parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-              adapter.parseErrorResponse(jqXHR.responseText) || errorThrown,
-              options
-            );
-          }
+        if (errorThrown instanceof Error) {
+          error = errorThrown;
+        } else if (textStatus === 'timeout') {
+          error = new DS.TimeoutError();
+        } else if (textStatus === 'abort') {
+          error = new DS.AbortError();
+        } else {
+          error = adapter.handleResponse(
+            jqXHR.status,
+            parseResponseHeaders(jqXHR.getAllResponseHeaders()),
+            adapter.parseErrorResponse(jqXHR.responseText) || errorThrown,
+            options
+          );
         }
 
-        Ember.run(null, reject, error);
+        Ember.run.join(null, reject, error);
       };
 
       Ember.$.ajax(options);
@@ -359,31 +354,9 @@ export default DS.Adapter.extend({
   */
   handleResponse: function(status, headers, payload) {
     if (payload['errors']) {
-      return new DS.InvalidError(payload['errors'].map((error) => { return error.message; }));
+      return new DS.InvalidError(payload['errors'].map(error => error.message));
     } else {
       return payload;
     }
   }
 });
-
-function parseResponseHeaders(headerStr) {
-  let headers = {};
-  if (!headerStr) { return headers; }
-
-  let headerPairs = headerStr.split('\u000d\u000a');
-
-  for (let i = 0; i < headerPairs.length; i++) {
-    let headerPair = headerPairs[i];
-    // Can't use split() here because it does the wrong thing
-    // if the header value has the string ": " in it.
-    let index = headerPair.indexOf('\u003a\u0020');
-
-    if (index > 0) {
-      let key = headerPair.substring(0, index);
-      let val = headerPair.substring(index + 2);
-      headers[key] = val;
-    }
-  }
-
-  return headers;
-}
