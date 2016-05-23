@@ -302,6 +302,22 @@ export default DS.Adapter.extend({
   },
 
   /**
+    @method parseErrorResponse
+    @private
+    @param {String} responseText
+    @return {Object}
+  */
+  parseErrorResponse(responseText) {
+    var json = responseText;
+
+    try {
+      json = Ember.$.parseJSON(responseText);
+    } catch (e) {}
+
+    return json;
+  },
+
+  /**
     @method ajaxOptions
     @private
     @param {String} url
