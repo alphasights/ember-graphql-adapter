@@ -176,7 +176,7 @@ test('findMany - finds many records coalescing in a single request', function(as
   run(function() {
     post.get('comments').then(function(comments) {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query comments { comments(ids: [1,2,3]) { id name } }');
+      assert.equal(passedQuery, 'query comments { comments(ids: ["1","2","3"]) { id name } }');
       assert.equal(comments.length, 3);
     });
   });
