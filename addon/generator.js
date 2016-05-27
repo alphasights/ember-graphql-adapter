@@ -51,13 +51,23 @@ export default {
 
   generateArgument({name, value}) {
     if (Ember.typeOf(value) === 'string') {
-      value = this.argumentStringWrapperToken + value + this.argumentStringWrapperToken;
+      value = this.wrapInStringTokens(value);
     } else if (Ember.typeOf(value) === 'array') {
-      value = this.argumentArrayOpeningToken + value + this.argumentArrayClosingToken;
+      value = this.argumentArrayOpeningToken + this.wrapArrayInStringTokens(value) + this.argumentArrayClosingToken;
     } else if (Ember.typeOf(value) === 'object') {
       value = this.argumentObjectOpeningToken + this.generateArgumentSet(value) + this.argumentObjectClosingToken;
     }
 
     return name + this.argumentKeyValueSeparateToken + value;
+  },
+
+  wrapArrayInStringTokens(array) {
+    return array.map((ele) => {
+      return this.wrapInStringTokens(ele);
+    }).join();
+  },
+
+  wrapInStringTokens(value) {
+    return this.argumentStringWrapperToken + value + this.argumentStringWrapperToken;
   }
 };
