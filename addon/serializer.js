@@ -24,6 +24,35 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     this._super(hash, typeClass, snapshot, options);
   },
 
+  serializeBelongsTo(snapshot, json, relationship) {
+    let {key, kind, options} = relationship;
+    let embeddedSnapshot = snapshot.belongsTo(key);
+    if (options.async) {
+      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      if (!embeddedSnapshot) {
+        json[serializedKey] = null;
+      } else {
+        json[serializedKey] = embeddedSnapshot.id;
+
+        if (options.polymorphic) {
+          this.serializePolymorphicType(snapshot, json, relationship);
+        }
+      }
+    } else {
+      this._serializeEmbeddedBelongsTo(snapshot, json, relationship);
+    }
+  },
+
+  serializeHasMany(snapshot, json, relationship) {
+    let {key, kind, options} = relationship;
+    if (options.async) {
+      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      json[serializedKey] = snapshot.hasMany(key, { ids: true });
+    } else {
+      this._serializeEmbeddedHasMany(snapshot, json, relationship);
+    }
+  },
+
   normalizeResponse(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
     const type = this.normalizeCase(primaryModelClass.modelName);

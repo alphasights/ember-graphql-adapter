@@ -1,75 +1,157 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
 import {module, test} from 'qunit';
-import Serializer from 'ember-graphql-adapter';
 
 let run = Ember.run;
 let env, store;
-let Author, Profile, Post;
-let author;
+let Address, Blog, Profile, Post, User;
 
 module("integration/serializer - GraphQL serializer", {
   beforeEach() {
+    Address = DS.Model.extend({
+      city: DS.attr('string')
+    });
+
+    Blog = DS.Model.extend({
+      title: DS.attr('string'),
+      posts: DS.hasMany('post', { async: true })
+    });
+
     Post = DS.Model.extend({
       title: DS.attr('string')
     });
 
-    Author = DS.Model.extend({
-      name: DS.attr('string'),
-      authorProfile: DS.belongsTo('profile'),
-      publishedBooks: DS.hasMany('post')
+    Profile = DS.Model.extend({
+      age: DS.attr('number'),
+      addresses: DS.hasMany('address', { async: false })
     });
 
-    Profile = DS.Model.extend({
-      age: DS.attr('number')
+    User = DS.Model.extend({
+      name: DS.attr('string'),
+      profile: DS.belongsTo('profile', { async: false })
     });
 
     env = setupStore({
-      serializer: Serializer.extend({}),
+      adapter: '-graphql',
+      address: Address,
+      blog: Blog,
       post: Post,
-      author: Author,
-      profile: Profile
+      profile: Profile,
+      user: User
     });
 
     store = env.store;
-
-    run(function() {
-      store.push({
-        data: {
-          type: 'post',
-          id: '1',
-          attributes: { title: 'Deception Point' },
-          relationships: {}
-        }
-      });
-
-      store.push({
-        data: {
-          type: 'profile',
-          id: '1',
-          attributes: { age: '45' },
-          relationships: {}
-        }
-      });
-
-      let post = store.peekRecord('post', 1);
-      let authorProfile = store.peekRecord('profile', 1);
-      author = store.createRecord('author', { name: 'Dan Brown', authorProfile });
-      author.get('publishedBooks').pushObject(post);
-    });
   }
 });
 
-test('serializes json api style data to a query usable as an ArgumentSet', function(assert) {
+test('serialize - simple', function(assert) {
   assert.expect(1);
 
+  run(function() {
+    store.push({
+      data: {
+        type: 'blog',
+        id: '1',
+        attributes: { title: 'Book reviews' },
+        relationships: {
+          posts: {
+            data: [
+              { type: 'post', id: '1' },
+              { type: 'post', id: '2' }
+            ]
+          }
+        }
+      }
+    });
+
+    store.push({
+      data: [{
+        type: 'post',
+        id: '1',
+        attributes: { title: 'Deception Point' },
+        relationships: {}
+      }, {
+        type: 'post',
+        id: '2',
+        attributes: { title: 'Angels & Demons' },
+        relationships: {}
+      }]
+    });
+  });
+
   let expected = {
-    'name': 'Dan Brown',
-    'authorProfile': '1',
-    'publishedBooks': ['1']
+    'title': 'Book reviews',
+    'posts': ['1', '2']
   };
 
   run(function() {
-    assert.deepEqual(author.serialize(), expected);
+    let blog = store.peekRecord('blog', 1);
+    assert.deepEqual(blog.serialize(), expected);
+  });
+});
+
+test('serialize - complex', function(assert) {
+  assert.expect(1);
+
+  run(function() {
+    store.push({
+      data: {
+        type: 'user',
+        id: '1',
+        attributes: { name: 'Dan Brown' },
+        relationships: {
+          profile: {
+            data: { type: 'profile', id: '1' }
+          }
+        }
+      },
+      included: [{
+        type: 'profile',
+        id: '1',
+        attributes: { age: '45' },
+        relationships: {
+          addresses: {
+            data: [
+              { type: 'address', id: '1' },
+              { type: 'address', id: '2' }
+            ]
+          }
+        }
+      }, {
+        type: 'address',
+        id: '1',
+        attributes: {
+          city: 'New York, NY'
+        },
+        relationships: {}
+      }, {
+        type: 'address',
+        id: '2',
+        attributes: {
+          city: 'Boston, MA'
+        },
+        relationships: {}
+      }]
+    });
+  });
+
+  let expected = {
+    'name': 'Dan Brown',
+    'profile': {
+      'id': '1',
+      'age': 45,
+      'addresses': [{
+        'id': '1',
+        'city': 'New York, NY'
+      }, {
+        'id': '2',
+        'city': 'Boston, MA',
+      }]
+    }
+  };
+
+  run(function() {
+    let user = store.peekRecord('user', 1);
+    assert.deepEqual(user.serialize(), expected);
   });
 });
