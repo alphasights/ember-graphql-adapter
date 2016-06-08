@@ -3,15 +3,19 @@ import Ember from 'ember';
 
 class Parser {
   constructor({normalizeCaseFn, parseSelectionSet}) {
+    this.agenda = [];
     this.normalizeCaseFn = normalizeCaseFn;
     this.parseSelectionSet = parseSelectionSet;
+    this.visited = [];
   }
 
   parse(model, store, operation, rootField) {
     rootField.selectionSet.push(new Type.Field('id'));
 
     if (this.parseSelectionSet) {
-      this._recursiveParse(model, store, rootField);
+      this.agenda.unshift(model);
+      this.visited.push(model.modelName);
+      this._recursiveParse(store, rootField);
     }
 
     operation.selectionSet.push(rootField);
@@ -28,7 +32,7 @@ class Parser {
     return this._buildField(Ember.String.singularize(relName) + suffix);
   }
 
-  _buildSyncRelationship(relModel, store, relName, {kind, type}) {
+  _buildSyncRelationship(store, relName, {kind, type}) {
     let normalizedRelName = this.normalizeCaseFn(relName);
     let normalizedType = this.normalizeCaseFn(this._getInflectedType(kind, type));
     let aliasedNameOrNull = this._getAliasedName(normalizedRelName, normalizedType);
@@ -40,7 +44,7 @@ class Parser {
       new Type.SelectionSet(new Type.Field('id'))
     );
 
-    this._recursiveParse(relModel, store, field);
+    this._recursiveParse(store, field);
 
     return field;
   }
@@ -59,24 +63,31 @@ class Parser {
     }
   }
 
-  _recursiveParse(model, store, rootField) {
-    model.eachAttribute((attr) => {
-      let field = this._buildField(attr);
-      rootField.selectionSet.push(field);
+  _recursiveParse(store, field) {
+    let currentModel = this.agenda.pop();
+    currentModel.eachAttribute((attr) => {
+      let relField = this._buildField(attr);
+      field.selectionSet.push(relField);
     });
 
-    model.eachRelationship((relName, relationship) => {
-      let field;
+    currentModel.eachRelationship((relName, relationship) => {
+      let relField;
       let {type, options} = relationship;
 
       if (options.async) {
-        field = this._buildAsyncRelationship(relName, relationship);
+        relField = this._buildAsyncRelationship(relName, relationship);
       } else {
         let relModel = store.modelFor(type);
-        field = this._buildSyncRelationship(relModel, store, relName, relationship);
+        if (this.visited.indexOf(relName) === -1) {
+          this.agenda.unshift(relModel);
+          this.visited.push(relName);
+          relField = this._buildSyncRelationship(store, relName, relationship);
+        }
       }
 
-      rootField.selectionSet.push(field);
+      if (relField) {
+        field.selectionSet.push(relField);
+      }
     });
   }
 }

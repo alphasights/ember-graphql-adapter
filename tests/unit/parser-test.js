@@ -11,16 +11,19 @@ const normalizeCaseFn = function(string) {
 };
 
 module('unit:ember-graphql-adapter/parser', {
-  setup: function() {
+  setup() {
     let projectModel = new ModelDouble(
-      'projects',
+      'project',
       ['status', 'name'],
       [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
     );
     let userModel = new ModelDouble('user', ['name'],
-      [['address', { type: 'address', kind: 'belongsTo', options: { async: false }}]]
+      [['address', { type: 'address', kind: 'belongsTo', options: { async: false }}],
+      ['project', { type: 'project', kind: 'belongsTo', options: { async: false }}]]
     );
-    let addressModel = new ModelDouble('address', ['city', 'country']);
+    let addressModel = new ModelDouble('address', ['city', 'country'],
+      [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
+    );
     let store = new StoreDouble({ 'project': projectModel, 'user': userModel, 'address': addressModel });
 
     let rootField = new Type.Field('projects');
