@@ -6,7 +6,7 @@ import {Adapter, Serializer} from 'ember-graphql-adapter';
 var env, store, adapter;
 var passedUrl, passedQuery;
 var run = Ember.run;
-var Post, Comment, PostCategory;
+var Author, Profile, Post, Comment, PostCategory;
 
 module("integration/adapter - GraphQL adapter", {
   beforeEach: function() {
@@ -18,6 +18,14 @@ module("integration/adapter - GraphQL adapter", {
       name: DS.attr('string')
     });
 
+    Author = DS.Model.extend({
+      name: DS.attr('string')
+    });
+
+    Profile = DS.Model.extend({
+      age: DS.attr('number')
+    });
+
     PostCategory = DS.Model.extend({
       name: DS.attr('string')
     });
@@ -25,6 +33,8 @@ module("integration/adapter - GraphQL adapter", {
     env = setupStore({
       adapter: Adapter.extend({ endpoint: '/graph' }),
       post: Post,
+      author: Author,
+      profile: Profile,
       comment: Comment,
       postCategory: PostCategory
     });
@@ -281,7 +291,7 @@ test('deleteRecord - deletes existing record', function(assert) {
 });
 
 test('Synchronous relationships are included', function(assert) {
-  assert.expect(10);
+  assert.expect(22);
 
   Post.reopen({
     postCategory: DS.belongsTo('postCategory', { async: false }),
@@ -289,38 +299,81 @@ test('Synchronous relationships are included', function(assert) {
     topComments: DS.hasMany('comment', { async: false })
   });
 
+  Author.reopen({
+    posts: DS.hasMany('post', { async: false }),
+    profile: DS.belongsTo('profile', { async: false })
+  });
+
   ajaxResponse({
     data: {
-      post: {
+      author: {
         id: '1',
-        name: 'Ember.js rocks',
-        postCategory: { id: '1', name: 'Tutorials' },
-        comments: [
-          { id: '1', name: 'FIRST' }
-        ],
-        topComments: [
-          { id: '2', name: 'SECOND' }
+        name: 'Jeffrey Archer',
+        profile: {
+          id: '1',
+          age: 30
+        },
+        posts: [
+          {
+            id: '1',
+            name: 'Ember.js rocks',
+            postCategory: { id: '1', name: 'Tutorials' },
+            comments: [
+              { id: '1', name: 'FIRST' }
+            ],
+            topComments: [
+              { id: '2', name: 'SECOND' }
+            ]
+          }, {
+            id: '2',
+            name: 'React has a smaller footprint than Ember.',
+            postCategory: { id: '2', name: 'Controversial' },
+            comments: [
+              { id: '3', name: 'THIRD' }
+            ],
+            topComments: [
+              { id: '4', name: 'FOURTH' }
+            ]
+          }
         ]
       }
     }
   });
 
   run(function() {
-    store.findRecord('post', 1).then(function(post) {
+    store.findRecord('author', 1).then(function(author) {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post { post(id: "1") { id name postCategory { id name } comments { id name } topComments: comments { id name } } }');
+      assert.equal(passedQuery, 'query author { author(id: "1") { id name posts { id name postCategory { id name } comments { id name } topComments: comments { id name } } profile { id age } } }');
 
-      assert.equal(post.get('id'), '1');
-      assert.equal(post.get('name'), 'Ember.js rocks');
+      assert.equal(author.get('id'), '1');
+      assert.equal(author.get('name'), 'Jeffrey Archer');
 
-      assert.equal(post.get('postCategory.id'), '1');
-      assert.equal(post.get('postCategory.name'), 'Tutorials');
+      assert.equal(author.get('profile.id'), '1');
+      assert.equal(author.get('profile.age'), 30);
 
-      assert.equal(post.get('comments.firstObject.id'), '1');
-      assert.equal(post.get('comments.firstObject.name'), 'FIRST');
+      assert.equal(author.get('posts.firstObject.id'), '1');
+      assert.equal(author.get('posts.firstObject.name'), 'Ember.js rocks');
 
-      assert.equal(post.get('topComments.firstObject.id'), '2');
-      assert.equal(post.get('topComments.firstObject.name'), 'SECOND');
+      assert.equal(author.get('posts.firstObject.postCategory.id'), '1');
+      assert.equal(author.get('posts.firstObject.postCategory.name'), 'Tutorials');
+
+      assert.equal(author.get('posts.firstObject.comments.firstObject.id'), '1');
+      assert.equal(author.get('posts.firstObject.comments.firstObject.name'), 'FIRST');
+
+      assert.equal(author.get('posts.firstObject.topComments.firstObject.id'), '2');
+      assert.equal(author.get('posts.firstObject.topComments.firstObject.name'), 'SECOND');
+
+      assert.equal(author.get('posts.lastObject.id'), '2');
+      assert.equal(author.get('posts.lastObject.name'), 'React has a smaller footprint than Ember.');
+
+      assert.equal(author.get('posts.lastObject.postCategory.id'), '2');
+      assert.equal(author.get('posts.lastObject.postCategory.name'), 'Controversial');
+
+      assert.equal(author.get('posts.lastObject.comments.firstObject.id'), '3');
+      assert.equal(author.get('posts.lastObject.comments.firstObject.name'), 'THIRD');
+
+      assert.equal(author.get('posts.lastObject.topComments.firstObject.id'), '4');
+      assert.equal(author.get('posts.lastObject.topComments.firstObject.name'), 'FOURTH');
     });
   });
 });

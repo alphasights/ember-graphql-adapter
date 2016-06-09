@@ -11,24 +11,7 @@ class Parser {
     rootField.selectionSet.push(new Type.Field('id'));
 
     if (this.parseSelectionSet) {
-      model.eachAttribute((attr) => {
-        let field = this._buildField(attr);
-        rootField.selectionSet.push(field);
-      });
-
-      model.eachRelationship((relName, relationship) => {
-        let field;
-        let {type, options} = relationship;
-
-        if (options.async) {
-          field = this._buildAsyncRelationship(relName, relationship);
-        } else {
-          let relModel = store.modelFor(type);
-          field = this._buildSyncRelationship(relModel, relName, relationship);
-        }
-
-        rootField.selectionSet.push(field);
-      });
+      this._recursiveParse(model, store, rootField);
     }
 
     operation.selectionSet.push(rootField);
@@ -45,7 +28,7 @@ class Parser {
     return this._buildField(Ember.String.singularize(relName) + suffix);
   }
 
-  _buildSyncRelationship(relModel, relName, {kind, type}) {
+  _buildSyncRelationship(relModel, store, relName, {kind, type}) {
     let normalizedRelName = this.normalizeCaseFn(relName);
     let normalizedType = this.normalizeCaseFn(this._getInflectedType(kind, type));
     let aliasedNameOrNull = this._getAliasedName(normalizedRelName, normalizedType);
@@ -57,10 +40,7 @@ class Parser {
       new Type.SelectionSet(new Type.Field('id'))
     );
 
-    relModel.eachAttribute((attr) => {
-      let relField = this._buildField(attr);
-      field.selectionSet.push(relField);
-    });
+    this._recursiveParse(relModel, store, field);
 
     return field;
   }
@@ -77,6 +57,27 @@ class Parser {
     if (relName !== type) {
       return relName;
     }
+  }
+
+  _recursiveParse(model, store, rootField) {
+    model.eachAttribute((attr) => {
+      let field = this._buildField(attr);
+      rootField.selectionSet.push(field);
+    });
+
+    model.eachRelationship((relName, relationship) => {
+      let field;
+      let {type, options} = relationship;
+
+      if (options.async) {
+        field = this._buildAsyncRelationship(relName, relationship);
+      } else {
+        let relModel = store.modelFor(type);
+        field = this._buildSyncRelationship(relModel, store, relName, relationship);
+      }
+
+      rootField.selectionSet.push(field);
+    });
   }
 }
 

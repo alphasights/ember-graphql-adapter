@@ -17,8 +17,11 @@ module('unit:ember-graphql-adapter/parser', {
       ['status', 'name'],
       [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
     );
-    let userModel = new ModelDouble('user', ['name']);
-    let store = new StoreDouble({ 'project': projectModel, 'user': userModel });
+    let userModel = new ModelDouble('user', ['name'],
+      [['address', { type: 'address', kind: 'belongsTo', options: { async: false }}]]
+    );
+    let addressModel = new ModelDouble('address', ['city', 'country']);
+    let store = new StoreDouble({ 'project': projectModel, 'user': userModel, 'address': addressModel });
 
     let rootField = new Type.Field('projects');
     let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
@@ -72,14 +75,6 @@ test('nested fields are generated in the root field selection set', function(ass
   let expectedUserField = projectsSelectionSet[3];
   assert.equal(expectedUserField instanceof Type.Field, true);
   assert.equal(expectedUserField.name, 'user');
-});
-
-test('belongsTo id injection', function(assert) {
-  let rootField = this.parseTree.selectionSet[0];
-  let projectsSelectionSet = rootField.selectionSet;
-  let expectedUserField = projectsSelectionSet[3];
-
-  assert.equal(expectedUserField.selectionSet.length, 2);
 
   let expectedUserIdField = expectedUserField.selectionSet[0];
   assert.equal(expectedUserIdField instanceof Type.Field, true);
@@ -88,4 +83,52 @@ test('belongsTo id injection', function(assert) {
   let expectedUserNameField = expectedUserField.selectionSet[1];
   assert.equal(expectedUserNameField instanceof Type.Field, true);
   assert.equal(expectedUserNameField.name, 'name');
+
+  let expectedUserAddressField = expectedUserField.selectionSet[2];
+  assert.equal(expectedUserAddressField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressField.name, 'address');
+
+  let expectedUserAddressIdField = expectedUserAddressField.selectionSet[0];
+  assert.equal(expectedUserAddressIdField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressIdField.name, 'id');
+
+  let expectedUserAddressCityField = expectedUserAddressField.selectionSet[1];
+  assert.equal(expectedUserAddressCityField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressCityField.name, 'city');
+
+  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet[2];
+  assert.equal(expectedUserAddressCountryField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressCountryField.name, 'country');
+});
+
+test('belongsTo id injection', function(assert) {
+  let rootField = this.parseTree.selectionSet[0];
+  let projectsSelectionSet = rootField.selectionSet;
+  let expectedUserField = projectsSelectionSet[3];
+
+  assert.equal(expectedUserField.selectionSet.length, 3);
+
+  let expectedUserIdField = expectedUserField.selectionSet[0];
+  assert.equal(expectedUserIdField instanceof Type.Field, true);
+  assert.equal(expectedUserIdField.name, 'id');
+
+  let expectedUserNameField = expectedUserField.selectionSet[1];
+  assert.equal(expectedUserNameField instanceof Type.Field, true);
+  assert.equal(expectedUserNameField.name, 'name');
+
+  let expectedUserAddressField = expectedUserField.selectionSet[2];
+  assert.equal(expectedUserAddressField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressField.name, 'address');
+
+  let expectedUserAddressIdField = expectedUserAddressField.selectionSet[0];
+  assert.equal(expectedUserAddressIdField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressIdField.name, 'id');
+
+  let expectedUserAddressCityField = expectedUserAddressField.selectionSet[1];
+  assert.equal(expectedUserAddressCityField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressCityField.name, 'city');
+
+  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet[2];
+  assert.equal(expectedUserAddressCountryField instanceof Type.Field, true);
+  assert.equal(expectedUserAddressCountryField.name, 'country');
 });

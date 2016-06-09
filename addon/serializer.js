@@ -4,213 +4,134 @@ import Ember from 'ember';
 const {
   String: {
     camelize,
-    singularize,
     pluralize,
+    singularize,
     underscore
   }
 } = Ember;
 
-export default DS.JSONAPISerializer.extend({
+export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
   isNewSerializerAPI: true,
 
-  normalizeCase: function(string) {
+  normalizeCase(string) {
     return camelize(string);
   },
 
-  serialize: function(snapshot) {
-    let data = {};
-
+  serializeIntoHash(hash, typeClass, snapshot, options) {
     if (snapshot.id) {
-      data[Ember.get(this, 'primaryKey')] = snapshot.id;
+      hash[Ember.get(this, 'primaryKey')] = snapshot.id;
     }
-
-    snapshot.eachAttribute((key, attribute) => {
-      this.__serializeAttribute(snapshot, data, key, attribute);
-    });
-
-    snapshot.eachRelationship((_relName, relationship) => {
-      if (relationship.kind === 'belongsTo') {
-        this.__serializeBelongsTo(snapshot, data, relationship);
-      } else if (relationship.kind === 'hasMany') {
-        this.__serializeHasMany(snapshot, data, relationship);
-      }
-    });
-
-    return data;
+    this._super(hash, typeClass, snapshot, options);
   },
 
-  __serializeBelongsTo: function(snapshot, data, relationship) {
-    let key = relationship.key;
+  serializeBelongsTo(snapshot, json, relationship) {
+    let {key, kind, options} = relationship;
+    let embeddedSnapshot = snapshot.belongsTo(key);
+    if (options.async) {
+      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      if (!embeddedSnapshot) {
+        json[serializedKey] = null;
+      } else {
+        json[serializedKey] = embeddedSnapshot.id;
 
-    if (this._canSerialize(key)) {
-      let belongsTo = snapshot.belongsTo(key);
-
-      if (belongsTo !== undefined) {
-        let payloadKey = this._getMappedKey(key, snapshot.type);
-        if (payloadKey === key && this.keyForRelationship) {
-          payloadKey = this.keyForRelationship(key, 'belongsTo', 'serialize');
+        if (options.polymorphic) {
+          this.serializePolymorphicType(snapshot, json, relationship);
         }
-
-        let associationKey = this.normalizeCase(`${payloadKey}Id`);
-        data[associationKey] = belongsTo.id;
       }
+    } else {
+      this._serializeEmbeddedBelongsTo(snapshot, json, relationship);
     }
   },
 
-  __serializeHasMany(snapshot, data, relationship) {
-    let key = relationship.key;
-
-    if (this._shouldSerializeHasMany(snapshot, key, relationship)) {
-      let hasMany = snapshot.hasMany(key);
-
-      if (hasMany !== undefined) {
-        let payloadKey = this._getMappedKey(key, snapshot.type);
-        if (payloadKey === key && this.keyForRelationship) {
-          payloadKey = this.keyForRelationship(key, 'hasMany', 'serialize');
-        }
-
-        let associationKey = this.normalizeCase(`${singularize(payloadKey)}Ids`);
-        data[associationKey] = hasMany.map(el => el.id);
-      }
+  serializeHasMany(snapshot, json, relationship) {
+    let {key, kind, options} = relationship;
+    if (options.async) {
+      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      json[serializedKey] = snapshot.hasMany(key, { ids: true });
+    } else {
+      this._serializeEmbeddedHasMany(snapshot, json, relationship);
     }
   },
 
-  __serializeAttribute: function(snapshot, data, key, attribute) {
-    let type = attribute.type;
-    let value = snapshot.attr(key);
-
-    if (this._canSerialize(key)) {
-      if (type) {
-        let transform = this.transformFor(type);
-        value = transform.serialize(value);
-      }
-      let payloadKey =  this._getMappedKey(key, snapshot.type);
-      if (payloadKey === key) {
-        payloadKey = this.keyForAttribute(key, 'serialize');
-      }
-
-      data[payloadKey] = value;
-    }
-  },
-
-  normalizeResponse: function(store, primaryModelClass, payload, id, requestType) {
+  normalizeResponse(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
-    const documentHash = { 'data': [], 'included': [] };
     const type = this.normalizeCase(primaryModelClass.modelName);
     const root = data[type] || data[pluralize(type)];
 
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
 
-    const singular = requestType.match(/^.*Record$/) || requestType === 'belongsTo';
-    data = singular ? [root] : root;
+    return this._super(store, primaryModelClass, root, id, requestType);
+  },
 
-    data.forEach((item) => {
-      documentHash['data'].push({
-        'type': type,
-        'id': this.__extractId(item),
-        'attributes': this.__extractAttributes(primaryModelClass, item, this),
-        'relationships': this.__extractRelationships(primaryModelClass, item)
-      });
+  extractRelationships(modelClass, resourceHash) {
+    let relationships = {};
 
-      primaryModelClass.eachRelationship((relName, {kind, type}) => {
-        let normalizedRelName = this.normalizeCase(relName);
-        let includes = item[normalizedRelName];
-        if (!includes) { return; }
+    modelClass.eachRelationship((key, {kind, type, options}) => {
+      let relationship = null;
+      let relationshipKey = this.keyForRelationship(key, kind, 'deserialize', options);
 
-        if (Ember.typeOf(includes) !== 'array') {
-          includes = [includes];
+      if (resourceHash.hasOwnProperty(relationshipKey)) {
+        let data = null;
+        let relationshipHash = resourceHash[relationshipKey];
+        if (kind === 'belongsTo') {
+          data = this.extractRelationship(type, relationshipHash);
+        } else if (kind === 'hasMany') {
+          if (!Ember.isNone(relationshipHash)) {
+            data = new Array(relationshipHash.length);
+            for (let i = 0, l = relationshipHash.length; i < l; i++) {
+              let item = relationshipHash[i];
+              data[i] = this.extractRelationship(type, item);
+            }
+          }
         }
-
-        const includeModelClass = store.modelFor(type);
-        const serializer = store.serializerFor(includeModelClass.modelName);
-
-        includes = this.__normalizeIncludes(store, includes, includeModelClass, serializer);
-        includes.forEach((include) => {
-          documentHash['included'].push(include);
-        });
-      });
-    });
-
-    if (singular) { documentHash['data'] = documentHash['data'][0]; }
-
-    return this._super(store, primaryModelClass, documentHash, id, requestType);
-  },
-
-  __normalizeIncludes: function(store, includes, includeModelClass, serializer) {
-    return includes.map((include) => {
-      return {
-        'type': includeModelClass.modelName,
-        'id': this.__extractId(include),
-        'attributes': this.__extractAttributes(includeModelClass, include, serializer),
-      };
-    });
-  },
-
-  __extractId: function(resourceHash) {
-    return resourceHash['id'];
-  },
-
-  __extractAttributes: function(modelClass, resourceHash, serializer) {
-    const attributes = {};
-
-    modelClass.eachAttribute((key) => {
-      let normalizedKey = this.normalizeCase(key);
-      attributes[serializer.keyForAttribute(key)] = resourceHash[normalizedKey];
-    });
-
-    return attributes;
-  },
-
-  __extractRelationships: function(modelClass, resourceHash) {
-    const relationships = {};
-
-    modelClass.eachRelationship((relName, {kind, type, options}) => {
-      let data;
-
-      if (options.async) {
-        let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
-        let key = singularize(relName) + suffix;
-        let normalizedKey = this.normalizeCase(key);
-        data = this.__buildRelationships(type, resourceHash[normalizedKey], (elem) => elem);
-      } else {
-        let normalizedRelName = this.normalizeCase(relName);
-        data = this.__buildRelationships(type, resourceHash[normalizedRelName], (elem) => elem.id);
+        relationship = { data };
       }
 
-      if (Ember.isPresent(data)) {
-        relationships[this.keyForRelationship(relName)] = { 'data': data };
+      let linkKey = this.keyForLink(key, kind);
+      if (resourceHash.links && resourceHash.links.hasOwnProperty(linkKey)) {
+        let related = resourceHash.links[linkKey];
+        relationship = relationship || {};
+        relationship.links = { related };
+      }
+
+      if (relationship) {
+        relationships[key] = relationship;
       }
     });
 
     return relationships;
   },
 
-  __buildRelationships: function(type, data, extractIdFn) {
-    if (!data) {
-      return;
-    }
-
-    if (Ember.typeOf(data) === 'array') {
-      return data.map((elem) => {
-        return this.__buildRelationship(extractIdFn(elem), type);
-      });
-    } else {
-      return this.__buildRelationship(extractIdFn(data), type);
-    }
+  _extractEmbeddedRecords(serializer, store, typeClass, partial) {
+    typeClass.eachRelationship((key, relationship) => {
+      if (!relationship.options.async) {
+        if (relationship.kind === "hasMany") {
+          this._extractEmbeddedHasMany(store, key, partial, relationship);
+        }
+        if (relationship.kind === "belongsTo") {
+          this._extractEmbeddedBelongsTo(store, key, partial, relationship);
+        }
+      }
+    });
+    return partial;
   },
 
-  __buildRelationship: function(id, type) {
-    return {
-      'id': id,
-      'type': type
-    };
-  },
-
-  keyForAttribute: function(key) {
+  keyForAttribute(key, method) {
+    if (method === 'deserialize') {
+      return this.normalizeCase(key);
+    }
     return underscore(key);
   },
 
-  keyForRelationship: function(key) {
+  keyForRelationship(key, kind, method, options) {
+    if (method === 'deserialize') {
+      if (options.async) {
+        let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
+        return this.normalizeCase(singularize(key) + suffix);
+      } else {
+        return this.normalizeCase(key);
+      }
+    }
     return underscore(key);
   }
 });
