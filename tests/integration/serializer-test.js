@@ -44,6 +44,207 @@ module("integration/serializer - GraphQL serializer", {
   }
 });
 
+test('normalize - single record', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let method = 'findRecord';
+  let modelName = 'post';
+
+  let payload = {
+    'data': {
+      'post': {
+        'id': '1',
+        'title': 'The post title'
+      }
+    }
+  };
+
+  let expected = {
+    'data': {
+      'type': 'post',
+      'id': '1',
+      'attributes': {
+        'title': 'The post title'
+      },
+      'relationships': {}
+    },
+    'included': []
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
+test('normalize - multiple records', function(assert) {
+  assert.expect(1);
+
+  let id = '1'; //doesn't matter
+  let method = 'query';
+  let modelName = 'post';
+
+  let payload = {
+    'data': {
+      'posts': [{
+        'id': '1',
+        'title': 'The post title'
+      }, {
+        'id': '2',
+        'title': 'The other post title'
+      }]
+    }
+  };
+
+  let expected = {
+    'data': [{
+      'type': 'post',
+      'id': '1',
+      'attributes': {
+        'title': 'The post title'
+      },
+      'relationships': {}
+    }, {
+      'type': 'post',
+      'id': '2',
+      'attributes': {
+        'title': 'The other post title'
+      },
+      'relationships': {}
+    }],
+    'included': []
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
+test('normalize - asynchronous relationships', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let method = 'findRecord';
+  let modelName = 'blog';
+
+  let payload = {
+    'data': {
+      'blog': {
+        'id': '1',
+        'title': 'The blog title',
+        'postIds': ['3', '4']
+      }
+    }
+  };
+
+  let expected = {
+    'data': {
+      'type': 'blog',
+      'id': '1',
+      'attributes': {
+        'title': 'The blog title'
+      },
+      'relationships': {
+        'posts': {
+          'data': [
+            { 'type': 'post', 'id': '3' },
+            { 'type': 'post', 'id': '4' }
+          ]
+        }
+      }
+    },
+    'included': []
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
+test('normalize - synchronous relationships', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let method = 'findRecord';
+  let modelName = 'user';
+
+  let payload = {
+    'data': {
+      'user': {
+        'id': '1',
+        'name': 'Dan Brown',
+        'profile': {
+          'id': '1',
+          'age': 45,
+          'addresses': [{
+            'id': '1',
+            'city': 'New York, NY'
+          }, {
+            'id': '2',
+            'city': 'Boston, MA',
+          }]
+        }
+      }
+    }
+  };
+
+  let expected = {
+    'data': {
+      'type': 'user',
+      'id': '1',
+      'attributes': { 'name': 'Dan Brown' },
+      'relationships': {
+        'profile': {
+          'data': { 'type': 'profile', 'id': '1' }
+        }
+      }
+    },
+    'included': [{
+      'type': 'profile',
+      'id': '1',
+      'attributes': { 'age': 45 },
+      'relationships': {
+        'addresses': {
+          'data': [
+            { 'type': 'address', 'id': '1' },
+            { 'type': 'address', 'id': '2' }
+          ]
+        }
+      }
+    }, {
+      'type': 'address',
+      'id': '1',
+      'attributes': {
+        'city': 'New York, NY'
+      },
+      'relationships': {}
+    }, {
+      'type': 'address',
+      'id': '2',
+      'attributes': {
+        'city': 'Boston, MA'
+      },
+      'relationships': {}
+    }]
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
 test('serialize - simple', function(assert) {
   assert.expect(1);
 
