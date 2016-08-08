@@ -23,6 +23,34 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     this._super(hash, typeClass, snapshot, options);
   },
 
+  serializeAttribute(snapshot, json, key, attribute) {
+    let type = attribute.type;
+
+    if (this._canSerialize(key)) {
+      let value = snapshot.attr(key);
+      if (type) {
+        if (type === 'string') {
+          if (!Ember.isNone(value)) {
+            value = value.replace(/\"/g, '\\"');
+          }
+        } else {
+          let transform = this.transformFor(type);
+          value = transform.serialize(value, attribute.options);
+        }
+      }
+
+      // if provided, use the mapping provided by `attrs` in
+      // the serializer
+      let payloadKey =  this._getMappedKey(key, snapshot.type);
+
+      if (payloadKey === key && this.keyForAttribute) {
+        payloadKey = this.keyForAttribute(key);
+      }
+
+      json[payloadKey] = value;
+    }
+  },
+
   serializeBelongsTo(snapshot, json, relationship) {
     let {key, kind, options} = relationship;
     let embeddedSnapshot = snapshot.belongsTo(key);
@@ -120,7 +148,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
   },
 
   keyForRelationship(key, kind, options) {
-    if (options.async) {
+    if (options && options.async) {
       let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
       return this.normalizeCase(singularize(key) + suffix);
     } else {
