@@ -282,7 +282,7 @@ test('serialize - simple', function(assert) {
 
   let expected = {
     'title': 'Book reviews',
-    'posts': ['1', '2']
+    'postIds': ['1', '2']
   };
 
   run(function() {

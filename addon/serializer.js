@@ -5,8 +5,7 @@ const {
   String: {
     camelize,
     pluralize,
-    singularize,
-    underscore
+    singularize
   }
 } = Ember;
 
@@ -28,7 +27,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     let {key, kind, options} = relationship;
     let embeddedSnapshot = snapshot.belongsTo(key);
     if (options.async) {
-      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      let serializedKey = this.keyForRelationship(key, kind, options);
       if (!embeddedSnapshot) {
         json[serializedKey] = null;
       } else {
@@ -46,7 +45,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
   serializeHasMany(snapshot, json, relationship) {
     let {key, kind, options} = relationship;
     if (options.async) {
-      let serializedKey = this.keyForRelationship(key, kind, 'serialize');
+      let serializedKey = this.keyForRelationship(key, kind, options);
       json[serializedKey] = snapshot.hasMany(key, { ids: true });
     } else {
       this._serializeEmbeddedHasMany(snapshot, json, relationship);
@@ -68,7 +67,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
 
     modelClass.eachRelationship((key, {kind, type, options}) => {
       let relationship = null;
-      let relationshipKey = this.keyForRelationship(key, kind, 'deserialize', options);
+      let relationshipKey = this.keyForRelationship(key, kind, options);
 
       if (resourceHash.hasOwnProperty(relationshipKey)) {
         let data = null;
@@ -116,22 +115,16 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     return partial;
   },
 
-  keyForAttribute(key, method) {
-    if (method === 'deserialize') {
-      return this.normalizeCase(key);
-    }
-    return underscore(key);
+  keyForAttribute(key) {
+    return this.normalizeCase(key);
   },
 
-  keyForRelationship(key, kind, method, options) {
-    if (method === 'deserialize') {
-      if (options.async) {
-        let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
-        return this.normalizeCase(singularize(key) + suffix);
-      } else {
-        return this.normalizeCase(key);
-      }
+  keyForRelationship(key, kind, options) {
+    if (options.async) {
+      let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
+      return this.normalizeCase(singularize(key) + suffix);
+    } else {
+      return this.normalizeCase(key);
     }
-    return underscore(key);
   }
 });
