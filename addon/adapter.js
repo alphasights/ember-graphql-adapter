@@ -370,7 +370,7 @@ export default DS.Adapter.extend({
   */
   handleResponse: function(status, headers, payload) {
     if (payload['errors']) {
-      return new DS.InvalidError(payload['errors'].map(error => error.message));
+      return new DS.InvalidError(payload['errors']);
     } else {
       return payload;
     }
