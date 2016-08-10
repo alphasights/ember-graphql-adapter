@@ -245,6 +245,52 @@ test('normalize - synchronous relationships', function(assert) {
   });
 });
 
+test('normalize - meta', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let method = 'query';
+  let modelName = 'post';
+
+  let payload = {
+    'data': {
+      'posts': [{
+        'id': '1',
+        'title': 'The post title'
+      }]
+    },
+    'meta': {
+      'total_count': 1,
+      'total_pages': 1,
+      'current_page': 1
+    }
+  };
+
+  let expected = {
+    'data': [{
+      'type': 'post',
+      'id': '1',
+      'attributes': {
+        'title': 'The post title'
+      },
+      'relationships': {}
+    }],
+    'included': [],
+    'meta': {
+      'total_count': 1,
+      'total_pages': 1,
+      'current_page': 1
+    }
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
 test('serialize - simple', function(assert) {
   assert.expect(1);
 
