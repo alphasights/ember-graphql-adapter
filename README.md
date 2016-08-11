@@ -40,7 +40,7 @@ And you're done!
 * Queries and mutations are automatically generated for you
 * Field aliases are supported
 * Belongs to relationships are fully supported
-* Has many relationships are supported at a basic level (please do open a PR!)
+* Has many relationships are fully supported
 * Async relationships and request coalescing is supported with `coalesceFindRequests: true`
 
 ## Rails Example
