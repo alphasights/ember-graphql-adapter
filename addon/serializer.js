@@ -85,7 +85,10 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     let meta = payload['meta'];
 
     const type = this.normalizeCase(primaryModelClass.modelName);
-    const root = data[type] || data[pluralize(type)];
+    let root = data[type];
+    if (Ember.typeOf(root) === 'undefined') {
+      root = data[pluralize(type)];
+    }
 
     Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
 
