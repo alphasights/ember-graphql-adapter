@@ -44,6 +44,32 @@ module("integration/serializer - GraphQL serializer", {
   }
 });
 
+test('normalize - null record', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let method = 'findRecord';
+  let modelName = 'post';
+
+  let payload = {
+    'data': {
+      'post': null
+    }
+  };
+
+  let expected = {
+    'data': null,
+    'included': []
+  };
+
+  run(function() {
+    let model = store.modelFor(modelName);
+    let serializer = store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    assert.deepEqual(result, expected);
+  });
+});
+
 test('normalize - single record', function(assert) {
   assert.expect(1);
 
