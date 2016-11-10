@@ -9,7 +9,11 @@ export default class ArgumentSet extends Array {
 
   push(...args) {
     super.push(...args.filter((arg) => {
-      return Ember.typeOf(arg.value) !== 'null';
+      if (Ember.typeOf(arg) === 'object') {
+        return Ember.typeOf(arg.value) !== 'undefined';
+      } else {
+        return Ember.typeOf(arg) !== 'undefined';
+      }
     }));
   }
 

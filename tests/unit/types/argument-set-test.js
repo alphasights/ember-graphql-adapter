@@ -31,11 +31,18 @@ test("it can be iterated over", function(assert) {
   assert.equal(acc[1], 2);
 });
 
-test("it will filter out Arguments with a null value", function(assert) {
+test("it will filter out Arguments with an undefined value", function(assert) {
+  let set = new ArgumentSet();
+  set.push(new Argument("status", undefined));
+
+  assert.equal(set.length, 0);
+});
+
+test("it will not filter out Arguments with a null value", function(assert) {
   let set = new ArgumentSet();
   set.push(new Argument("status", null));
 
-  assert.equal(set.length, 0);
+  assert.equal(set.length, 1);
 });
 
 
@@ -49,8 +56,18 @@ test("it can be made from a query", function(assert) {
   assert.equal(set[1].value, 10);
 });
 
-test("filters out null arguments", function(assert) {
+test("does not filter out null arguments from a query", function(assert) {
   let set = ArgumentSet.fromQuery({ status: null, limit: 10 });
+
+  assert.equal(set.length, 2);
+  assert.equal(set[0].name, 'status');
+  assert.equal(set[0].value, null);
+  assert.equal(set[1].name, 'limit');
+  assert.equal(set[1].value, 10);
+});
+
+test("filters out undefined arguments from a query", function(assert) {
+  let set = ArgumentSet.fromQuery({ status: undefined, limit: 10 });
 
   assert.equal(set.length, 1);
   assert.equal(set[0].name, 'limit');
