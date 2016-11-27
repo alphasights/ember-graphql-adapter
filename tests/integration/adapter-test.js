@@ -343,7 +343,7 @@ test('Synchronous relationships are included', function(assert) {
   run(function() {
     store.findRecord('author', 1).then(function(author) {
       assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query author { author(id: "1") { id name posts { id name postCategory { id name } comments { id name } topComments: comments { id name } } profile { id age } } }');
+      assert.equal(passedQuery, 'query author { author(id: "1") { id name posts { id name postCategory { id name } comments { id name } topComments { id name } } profile { id age } } }');
 
       assert.equal(author.get('id'), '1');
       assert.equal(author.get('name'), 'Jeffrey Archer');
