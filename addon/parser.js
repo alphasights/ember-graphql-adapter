@@ -32,14 +32,10 @@ class Parser {
     return this._buildField(Ember.String.singularize(relName) + suffix);
   }
 
-  _buildSyncRelationship(store, relName, {kind, type}) {
-    let normalizedRelName = this.normalizeCaseFn(relName);
-    let normalizedType = this.normalizeCaseFn(this._getInflectedType(kind, type));
-    let aliasedNameOrNull = this._getAliasedName(normalizedRelName, normalizedType);
-
+  _buildSyncRelationship(store, relName) {
     let field = new Type.Field(
-      normalizedType,
-      aliasedNameOrNull,
+      this.normalizeCaseFn(relName),
+      null,
       new Type.ArgumentSet(),
       new Type.SelectionSet(new Type.Field('id'))
     );
@@ -47,20 +43,6 @@ class Parser {
     this._recursiveParse(store, field);
 
     return field;
-  }
-
-  _getInflectedType(kind, type) {
-    if (kind === 'hasMany') {
-      return Ember.String.pluralize(type);
-    } else {
-      return type;
-    }
-  }
-
-  _getAliasedName(relName, type) {
-    if (relName !== type) {
-      return relName;
-    }
   }
 
   _recursiveParse(store, field) {
@@ -81,7 +63,7 @@ class Parser {
         if (this.visited.indexOf(relName) === -1) {
           this.agenda.unshift(relModel);
           this.visited.push(relName);
-          relField = this._buildSyncRelationship(store, relName, relationship);
+          relField = this._buildSyncRelationship(store, relName);
         }
       }
 
