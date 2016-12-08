@@ -97,6 +97,19 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     return this._super(store, primaryModelClass, root, id, requestType);
   },
 
+  pushPayload(store, payload) {
+    let payloadKey = Object.keys(payload.data)[0];
+    let modelClass = store.modelFor(singularize(payloadKey));
+    let resourceHash = payload.data[payloadKey];
+    let normalized;
+    if (Ember.typeOf(resourceHash) === 'object') {
+      normalized = this._normalizeResponse(store, modelClass, resourceHash, resourceHash.id, null, true);
+    } else {
+      normalized = this._normalizeResponse(store, modelClass, resourceHash, null, null, false);
+    }
+    store.push(normalized);
+  },
+
   extractRelationships(modelClass, resourceHash) {
     let relationships = {};
 
