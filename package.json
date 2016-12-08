@@ -1,6 +1,6 @@
 {
   "name": "ember-graphql-adapter",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "An Ember CLI adapter for GraphQL",
   "directories": {
     "doc": "doc",
