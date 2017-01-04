@@ -75,7 +75,7 @@ module Graph
     field :post do
       type PostType
       argument :id, !types.ID, "The ID of the post"
-      resolve -> (obj, args, ctw) do
+      resolve -> (_obj, args, _ctw) do
         Post.find(args[:id])
       end
     end
