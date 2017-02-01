@@ -31,6 +31,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
       if (type) {
         if (type === 'string') {
           if (!Ember.isNone(value)) {
+            value = value.replace(/\\/g, '\\\\');
             value = value.replace(/\"/g, '\\"');
           }
         } else {
