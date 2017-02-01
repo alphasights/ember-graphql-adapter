@@ -597,3 +597,41 @@ test('Saving a record with a quotes in a string attribute', function(assert) {
     });
   });
 });
+
+test('Saving a record with a backslash in a string attribute', function(assert) {
+  assert.expect(3);
+
+  run(function() {
+    store.push({
+      data: {
+        type: 'post',
+        id: '1',
+        attributes: {
+          name: 'Rails is omakase'
+        }
+      }
+    });
+  });
+
+  ajaxResponse({
+    data: {
+      post: {
+        id: '1',
+        name: 'Ember.js is da \\ the bomb.'
+      }
+    }
+  });
+
+  run(function() {
+    let post = store.peekRecord('post', 1);
+
+    post.set('name', 'Ember.js is da \\ the bomb.');
+
+    post.save().then(function(post) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js is da \\\\ the bomb.") { id name } }');
+
+      assert.equal(post.get('name'), 'Ember.js is da \\ the bomb.');
+    });
+  });
+});
