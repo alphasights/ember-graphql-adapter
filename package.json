@@ -13,7 +13,7 @@
   },
   "repository": "https://github.com/alphasights/ember-graphql-adapter",
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 4"
   },
   "author": "",
   "license": "MIT",
