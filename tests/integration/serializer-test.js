@@ -1,5 +1,6 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
+import DS from 'ember-data';
 import {module, test} from 'qunit';
 
 let run = Ember.run;
@@ -41,6 +42,10 @@ module("integration/serializer - GraphQL serializer", {
     });
 
     store = env.store;
+  },
+
+  afterEach() {
+    run(env.store, 'destroy');
   }
 });
 

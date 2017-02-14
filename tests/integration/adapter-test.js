@@ -1,5 +1,6 @@
 import setupStore from 'dummy/tests/helpers/store';
 import Ember from 'ember';
+import DS from 'ember-data';
 import {module, test} from 'qunit';
 import {Adapter, Serializer} from 'ember-graphql-adapter';
 
@@ -9,7 +10,7 @@ var run = Ember.run;
 var Author, Profile, Post, Comment, PostCategory;
 
 module("integration/adapter - GraphQL adapter", {
-  beforeEach: function() {
+  beforeEach() {
     Post = DS.Model.extend({
       name: DS.attr('string')
     });
@@ -41,6 +42,10 @@ module("integration/adapter - GraphQL adapter", {
 
     store = env.store;
     adapter = env.adapter;
+  },
+
+  afterEach() {
+    run(env.store, 'destroy');
   }
 });
 

@@ -1,15 +1,22 @@
 import Ember from 'ember';
 import DS from 'ember-data';
-import {Adapter, Serializer} from 'ember-graphql-adapter';
+import { Adapter, Serializer } from 'ember-graphql-adapter';
+import Owner from './owner';
 
 export default function setupStore(options) {
-  var container, registry;
+  var container, registry, owner;
   var env = {};
   options = options || {};
 
   if (Ember.Registry) {
     registry = env.registry = new Ember.Registry();
-    container = env.container = registry.container();
+    owner = Owner.create({
+      __registry__: registry
+    });
+    container = env.container = registry.container({
+      owner: owner
+    });
+    owner.__container__ = container;
   } else {
     container = env.container = new Ember.Container();
     registry = env.registry = container;
@@ -65,7 +72,7 @@ export default function setupStore(options) {
   return env;
 }
 
-export {setupStore};
+export { setupStore };
 
 export function createStore(options) {
   return setupStore(options).store;
