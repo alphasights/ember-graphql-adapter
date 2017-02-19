@@ -2,6 +2,7 @@ import DS from 'ember-data';
 import Ember from 'ember';
 import Compiler from './compiler';
 import parseResponseHeaders from 'ember-data/-private/utils/parse-response-headers';
+import raw from 'ember-ajax/raw';
 
 export default DS.Adapter.extend({
   endpoint: null,
@@ -257,9 +258,9 @@ export default DS.Adapter.extend({
   request: function(store, type, options) {
     let compiledQuery = this.compile(store, type, options);
     let url = this.endpoint;
-    let ajaxOpts = this.ajaxOptions(url, { query: compiledQuery });
+    let ajaxOpts = this.ajaxOptions({ query: compiledQuery });
 
-    return this.ajax(ajaxOpts);
+    return this.ajax(url, ajaxOpts);
   },
 
   /**
@@ -268,12 +269,12 @@ export default DS.Adapter.extend({
     @params {Object} options
     @return {Promise} promise
   */
-  ajax: function(options) {
+  ajax: function(url, options) {
     let adapter = this;
 
     return new Ember.RSVP.Promise(function(resolve, reject) {
-      options.success = function(payload, textStatus, jqXHR) {
-        let response = adapter.handleResponse(
+      raw(url, options).then(function({ jqXHR, payload, response, textStatus }) {
+        adapter.handleResponse(
           jqXHR.status,
           parseResponseHeaders(jqXHR.getAllResponseHeaders()),
           payload,
@@ -285,11 +286,7 @@ export default DS.Adapter.extend({
         } else {
           Ember.run.join(null, resolve, response);
         }
-      };
-
-      options.error = function(jqXHR, textStatus, errorThrown) {
-        let error;
-
+      }, function(error) {
         if (errorThrown instanceof Error) {
           error = errorThrown;
         } else if (textStatus === 'timeout') {
@@ -306,9 +303,7 @@ export default DS.Adapter.extend({
         }
 
         Ember.run.join(null, reject, error);
-      };
-
-      Ember.$.ajax(options);
+      });
     }, `GraphQLAdapter#ajax to '${options.url}' with query '${options.data.query}'`);
   },
 
@@ -334,9 +329,8 @@ export default DS.Adapter.extend({
     @param {String} url
     @return {Object}
   */
-  ajaxOptions: function(url, data) {
+  ajaxOptions: function(data) {
     let opts =  {
-      'url': url,
       'dataType': 'json',
       'data': data,
       'type': this.httpMethod,
