@@ -1,5 +1,7 @@
 # Ember Data GraphQL Adapter
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/alphasights/ember-graphql-adapter.svg)](https://greenkeeper.io/)
+
 [![Npm Version](https://badge.fury.io/js/ember-graphql-adapter.svg)](http://badge.fury.io/js/ember-graphql-adapter)
 [![Code Climate](https://codeclimate.com/repos/56718e7b080d2e007b000e1d/badges/8a110d437cbb217f1924/gpa.svg)](https://codeclimate.com/repos/56718e7b080d2e007b000e1d/feed)
 [![Circle CI](https://circleci.com/gh/alphasights/ember-graphql-adapter/tree/master.svg?style=shield&circle-token=b7ad9e9231130c64c6f7bf0e9a7f870cea9ca8e4)](https://circleci.com/gh/alphasights/ember-graphql-adapter/tree/master)
