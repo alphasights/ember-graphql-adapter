@@ -10,7 +10,7 @@ const normalizeCaseFn = function(string) {
   return Ember.String.camelize(string);
 };
 
-let parseTree;
+let nodeParseTree, projectsParseTree;
 
 module('unit:ember-graphql-adapter/parser', {
   before() {
@@ -26,12 +26,29 @@ module('unit:ember-graphql-adapter/parser', {
     let addressModel = new ModelDouble('address', ['city', 'country'],
       [['user', { type: 'user', kind: 'belongsTo', options: { async: false }}]]
     );
-    let store = new StoreDouble({ 'project': projectModel, 'user': userModel, 'address': addressModel });
 
-    let rootField = new Type.Field('projects');
-    let operation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
+    let nodeModel = new ModelDouble(
+      'node',
+      ['name'],
+      [['parent', { type: 'node', kind: 'belongsTo', options: { async: false }}],
+      ['children', { type: 'node', kind: 'hasMany', options: { async: false }}]]
+    );
 
-    parseTree = Parser.parse(projectModel, store, operation, rootField, {
+    let store = new StoreDouble({
+      'project': projectModel, 'user': userModel, 'address': addressModel, 'node': nodeModel
+    });
+
+    let nodeRootField = new Type.Field('node');
+    let projectsRootField = new Type.Field('projects');
+    let nodeOperation = new Type.Operation('query', 'nodeQuery', ArgumentSet.fromQuery({ id: 'my_node_id' }));
+    let projectsOperation = new Type.Operation('query', 'projectsQuery', ArgumentSet.fromQuery({ status: 'active' }));
+
+    nodeParseTree = Parser.parse(nodeModel, store, nodeOperation, nodeRootField, {
+      normalizeCaseFn: normalizeCaseFn,
+      parseSelectionSet: true
+    });
+
+    projectsParseTree = Parser.parse(projectModel, store, projectsOperation, projectsRootField, {
       normalizeCaseFn: normalizeCaseFn,
       parseSelectionSet: true
     });
@@ -39,30 +56,30 @@ module('unit:ember-graphql-adapter/parser', {
 });
 
 test('makes the root of the tree an Operation', function(assert) {
-  assert.equal(parseTree instanceof Type.Operation, true);
-  assert.equal(parseTree.type, 'query');
-  assert.equal(parseTree.name, 'projectsQuery');
+  assert.equal(projectsParseTree instanceof Type.Operation, true);
+  assert.equal(projectsParseTree.type, 'query');
+  assert.equal(projectsParseTree.name, 'projectsQuery');
 
-  let rootSelectionSet = parseTree.selectionSet;
+  let rootSelectionSet = projectsParseTree.selectionSet;
   assert.equal(rootSelectionSet instanceof Type.SelectionSet, true);
   assert.equal(rootSelectionSet.length, 1);
 });
 
 test('root field is generated in the selection set', function(assert){
-  let rootField = parseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet[0];
   assert.equal(rootField instanceof Type.Field, true);
   assert.equal(rootField.name, 'projects');
 });
 
 test('there are as many elements in the selection set as there are top level fields (plus the id field)', function(assert){
-  let rootField = parseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
 
   assert.equal(projectsSelectionSet.length, 4);
 });
 
 test('nested fields are generated in the root field selection set', function(assert){
-  let rootField = parseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
 
   let expectedIdField = projectsSelectionSet[0];
@@ -107,7 +124,7 @@ test('nested fields are generated in the root field selection set', function(ass
 });
 
 test('belongsTo id injection', function(assert) {
-  let rootField = parseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet[0];
   let projectsSelectionSet = rootField.selectionSet;
   let expectedUserField = projectsSelectionSet[3];
 
@@ -136,4 +153,41 @@ test('belongsTo id injection', function(assert) {
   let expectedUserAddressCountryField = expectedUserAddressField.selectionSet[2];
   assert.equal(expectedUserAddressCountryField instanceof Type.Field, true);
   assert.equal(expectedUserAddressCountryField.name, 'country');
+});
+
+test('reflexive relationships', function(assert) {
+  let rootField = nodeParseTree.selectionSet[0];
+  let nodeSelectionSet = rootField.selectionSet;
+
+  let expectedIdField = nodeSelectionSet[0];
+  assert.equal(expectedIdField instanceof Type.Field, true);
+  assert.equal(expectedIdField.name, 'id');
+
+  let expectedNameField = nodeSelectionSet[1];
+  assert.equal(expectedNameField instanceof Type.Field, true);
+  assert.equal(expectedNameField.name, 'name');
+
+  let expectedParentField = nodeSelectionSet[2];
+  assert.equal(expectedParentField instanceof Type.Field, true);
+  assert.equal(expectedParentField.name, 'parent');
+
+  let expectedParentIdField = expectedParentField.selectionSet[0];
+  assert.equal(expectedParentIdField instanceof Type.Field, true);
+  assert.equal(expectedParentIdField.name, 'id');
+
+  let expectedParentNameField = expectedParentField.selectionSet[1];
+  assert.equal(expectedParentNameField instanceof Type.Field, true);
+  assert.equal(expectedParentNameField.name, 'name');
+
+  let expectedChildrenField = nodeSelectionSet[3];
+  assert.equal(expectedChildrenField instanceof Type.Field, true);
+  assert.equal(expectedChildrenField.name, 'children');
+
+  let expectedChildrenIdField = expectedChildrenField.selectionSet[0];
+  assert.equal(expectedChildrenIdField instanceof Type.Field, true);
+  assert.equal(expectedChildrenIdField.name, 'id');
+
+  let expectedChildrenNameField = expectedChildrenField.selectionSet[1];
+  assert.equal(expectedChildrenNameField instanceof Type.Field, true);
+  assert.equal(expectedChildrenNameField.name, 'name');
 });
