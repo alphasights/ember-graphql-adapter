@@ -322,6 +322,177 @@ test('normalize - meta', function(assert) {
   });
 });
 
+test('pushPayload - single record, asynchronous relationships', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let modelName = 'blog';
+
+  let payload = {
+    'data': {
+      'blog': {
+        'id': '1',
+        'title': 'The blog title',
+        'postIds': ['3', '4']
+      }
+    }
+  };
+
+  let expected = {
+    'title': 'The blog title',
+    'postIds': ['3', '4']
+  };
+
+  run(function() {
+    store.pushPayload(payload);
+    let result = store.peekRecord(modelName, id);
+    assert.deepEqual(result.serialize(), expected);
+  });
+});
+
+test('pushPayload - single record, synchronous relationships', function(assert) {
+  assert.expect(1);
+
+  let id = '1';
+  let modelName = 'user';
+
+  let payload = {
+    'data': {
+      'user': {
+        'id': '1',
+        'name': 'Dan Brown',
+        'profile': {
+          'id': '1',
+          'age': 45,
+          'addresses': [{
+            'id': '1',
+            'city': 'New York, NY'
+          }, {
+            'id': '2',
+            'city': 'Boston, MA',
+          }]
+        }
+      }
+    }
+  };
+
+  let expected = {
+    'name': 'Dan Brown',
+    'profile': {
+      'addresses': [
+        {
+          'city': 'New York, NY',
+          'id': '1'
+        },
+        {
+          'city': 'Boston, MA',
+          'id': '2'
+        }
+      ],
+      'age': 45,
+      'id': '1'
+    }
+  };
+
+  run(function() {
+    store.pushPayload(payload);
+    let result = store.peekRecord(modelName, id);
+    assert.deepEqual(result.serialize(), expected);
+  });
+});
+
+test('pushPayload - multiple records, asynchronous relationships', function(assert) {
+  assert.expect(2);
+
+  let modelName = 'blog';
+
+  let payload = {
+    'data': {
+      'blogs': [
+        {
+          'id': '1',
+          'title': 'The blog title',
+          'postIds': ['3', '4']
+        }, {
+          'id': '2',
+          'title': 'Another click bait',
+          'postIds': ['5', '6']
+        }
+      ]
+    }
+  };
+
+  let expectedOne = {
+    'title': 'The blog title',
+    'postIds': ['3', '4']
+  };
+  let expectedTwo = {
+    'title': 'Another click bait',
+    'postIds': ['5', '6']
+  };
+
+  run(function() {
+    store.pushPayload(payload);
+    let blogOne = store.peekRecord(modelName, 1);
+    let blogTwo = store.peekRecord(modelName, 2);
+    assert.deepEqual(blogOne.serialize(), expectedOne);
+    assert.deepEqual(blogTwo.serialize(), expectedTwo);
+  });
+});
+
+test('pushPayload - multiple records, synchronous relationships', function(assert) {
+  assert.expect(2);
+
+  let modelName = 'user';
+
+  let payload = {
+    'data': {
+      'users': [
+        {
+          'id': '1',
+          'name': 'Dan Brown',
+          'profile': {
+            'id': '1',
+            'age': 45
+          }
+        }, {
+          'id': '2',
+          'name': 'James Patterson',
+          'profile': {
+            'id': '2',
+            'age': 55
+          }
+        }
+      ]
+    }
+  };
+
+  let expectedOne = {
+    'name': 'Dan Brown',
+    'profile': {
+      'id': '1',
+      'age': 45,
+      'addresses': []
+    }
+  };
+  let expectedTwo = {
+    'name': 'James Patterson',
+    'profile': {
+      'id': '2',
+      'age': 55,
+      'addresses': []
+    }
+  };
+
+  run(function() {
+    store.pushPayload(payload);
+    let userOne = store.peekRecord(modelName, 1);
+    let userTwo = store.peekRecord(modelName, 2);
+    assert.deepEqual(userOne.serialize(), expectedOne);
+    assert.deepEqual(userTwo.serialize(), expectedTwo);
+  });
+});
+
 test('serialize - simple', function(assert) {
   assert.expect(1);
 
