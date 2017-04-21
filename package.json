@@ -13,9 +13,9 @@
   },
   "repository": "https://github.com/alphasights/ember-graphql-adapter",
   "scripts": {
-    "build": "ember build",
-    "start": "ember server",
-    "test": "ember try:each"
+    "build": "yarn run ember build",
+    "start": "yarn run ember server",
+    "test": "yarn run ember try:each"
   },
   "dependencies": {
     "ember-cli-babel": "5.2.4"
