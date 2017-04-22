@@ -1,13 +1,11 @@
 machine:
   node:
-    version: 6.9.5
+    version: 7.9.0
+dependencies:
+  override:
+    - yarn
+  cache_directories:
+    - ~/.cache/yarn
 test:
   override:
-    - npm test
-dependencies:
-  pre:
-    - npm config set spin false
-    - npm install -g bower
-  override:
-    - npm install
-    - bower install
+    - yarn test
