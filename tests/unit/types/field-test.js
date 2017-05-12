@@ -21,8 +21,8 @@ test('if no argument or selection sets are provided, they default to new empty s
   assert.equal(field.alias, null);
 
   assert.equal(field.argumentSet instanceof ArgumentSet, true);
-  assert.equal(field.argumentSet.length, 0);
+  assert.equal(field.argumentSet.toArray().length, 0);
 
   assert.equal(field.selectionSet instanceof SelectionSet, true);
-  assert.equal(field.selectionSet.length, 0);
+  assert.equal(field.selectionSet.toArray().length, 0);
 });

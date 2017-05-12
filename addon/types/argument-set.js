@@ -1,20 +1,31 @@
 import { Argument } from '../types';
 import Ember from 'ember';
 
-export default class ArgumentSet extends Array {
+const { typeOf } = Ember;
+
+export default class ArgumentSet {
   constructor(...args) {
-    super();
-    this.push(...args);
+    this.items = [...args];
   }
 
   push(...args) {
-    super.push(...args.filter((arg) => {
-      if (Ember.typeOf(arg) === 'object') {
-        return Ember.typeOf(arg.value) !== 'undefined';
+    let filteredArgs = args.filter(arg => {
+      if (typeOf(arg) === 'object') {
+        return typeOf(arg.value) !== 'undefined';
       } else {
-        return Ember.typeOf(arg) !== 'undefined';
+        return typeOf(arg) !== 'undefined';
       }
-    }));
+    });
+
+    this.items.push(...filteredArgs);
+  }
+
+  pop() {
+    return this.items.pop();
+  }
+
+  toArray() {
+    return new Array(...this.items);
   }
 
   static fromQuery(query) {
@@ -23,7 +34,7 @@ export default class ArgumentSet extends Array {
     Object.keys(query).forEach((key) => {
       let arg = new Argument(key);
 
-      if (Ember.typeOf(query[key]) === 'object') {
+      if (typeOf(query[key]) === 'object') {
         arg.value = this.fromQuery(query[key]);
       } else {
         arg.value = query[key];

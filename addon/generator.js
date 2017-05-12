@@ -30,11 +30,11 @@ export default {
 
     acc = acc + field.name;
 
-    if (field.argumentSet.length > 0) {
+    if (field.argumentSet.toArray().length > 0) {
       acc = acc + `${this.argumentSetOpeningToken}${this.generateArgumentSet(field.argumentSet)}${this.argumentSetClosingToken}`;
     }
 
-    if (field.selectionSet.length > 0) {
+    if (field.selectionSet.toArray().length > 0) {
       acc = acc + `${this.openingToken}${this.generateSelectionSet(field.selectionSet)}${this.closingToken}`;
     }
 
@@ -42,11 +42,11 @@ export default {
   },
 
   generateSelectionSet(set) {
-    return set.map(field => this.generateField(field)).join('');
+    return set.toArray().map(field => this.generateField(field)).join('');
   },
 
   generateArgumentSet(set) {
-    return set.map(argument => this.generateArgument(argument)).join(this.argumentSeparatorToken);
+    return set.toArray().map(argument => this.generateArgument(argument)).join(this.argumentSeparatorToken);
   },
 
   generateArgument({name, value}) {

@@ -62,25 +62,25 @@ test('makes the root of the tree an Operation', function(assert) {
 
   let rootSelectionSet = projectsParseTree.selectionSet;
   assert.equal(rootSelectionSet instanceof Type.SelectionSet, true);
-  assert.equal(rootSelectionSet.length, 1);
+  assert.equal(rootSelectionSet.toArray().length, 1);
 });
 
 test('root field is generated in the selection set', function(assert){
-  let rootField = projectsParseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet.toArray()[0];
   assert.equal(rootField instanceof Type.Field, true);
   assert.equal(rootField.name, 'projects');
 });
 
 test('there are as many elements in the selection set as there are top level fields (plus the id field)', function(assert){
-  let rootField = projectsParseTree.selectionSet[0];
+  let rootField = projectsParseTree.selectionSet.toArray()[0];
   let projectsSelectionSet = rootField.selectionSet;
 
-  assert.equal(projectsSelectionSet.length, 4);
+  assert.equal(projectsSelectionSet.toArray().length, 4);
 });
 
 test('nested fields are generated in the root field selection set', function(assert){
-  let rootField = projectsParseTree.selectionSet[0];
-  let projectsSelectionSet = rootField.selectionSet;
+  let rootField = projectsParseTree.selectionSet.toArray()[0];
+  let projectsSelectionSet = rootField.selectionSet.toArray();
 
   let expectedIdField = projectsSelectionSet[0];
   assert.equal(expectedIdField instanceof Type.Field, true);
@@ -98,66 +98,66 @@ test('nested fields are generated in the root field selection set', function(ass
   assert.equal(expectedUserField instanceof Type.Field, true);
   assert.equal(expectedUserField.name, 'user');
 
-  let expectedUserIdField = expectedUserField.selectionSet[0];
+  let expectedUserIdField = expectedUserField.selectionSet.toArray()[0];
   assert.equal(expectedUserIdField instanceof Type.Field, true);
   assert.equal(expectedUserIdField.name, 'id');
 
-  let expectedUserNameField = expectedUserField.selectionSet[1];
+  let expectedUserNameField = expectedUserField.selectionSet.toArray()[1];
   assert.equal(expectedUserNameField instanceof Type.Field, true);
   assert.equal(expectedUserNameField.name, 'name');
 
-  let expectedUserAddressField = expectedUserField.selectionSet[2];
+  let expectedUserAddressField = expectedUserField.selectionSet.toArray()[2];
   assert.equal(expectedUserAddressField instanceof Type.Field, true);
   assert.equal(expectedUserAddressField.name, 'address');
 
-  let expectedUserAddressIdField = expectedUserAddressField.selectionSet[0];
+  let expectedUserAddressIdField = expectedUserAddressField.selectionSet.toArray()[0];
   assert.equal(expectedUserAddressIdField instanceof Type.Field, true);
   assert.equal(expectedUserAddressIdField.name, 'id');
 
-  let expectedUserAddressCityField = expectedUserAddressField.selectionSet[1];
+  let expectedUserAddressCityField = expectedUserAddressField.selectionSet.toArray()[1];
   assert.equal(expectedUserAddressCityField instanceof Type.Field, true);
   assert.equal(expectedUserAddressCityField.name, 'city');
 
-  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet[2];
+  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet.toArray()[2];
   assert.equal(expectedUserAddressCountryField instanceof Type.Field, true);
   assert.equal(expectedUserAddressCountryField.name, 'country');
 });
 
 test('belongsTo id injection', function(assert) {
-  let rootField = projectsParseTree.selectionSet[0];
-  let projectsSelectionSet = rootField.selectionSet;
+  let rootField = projectsParseTree.selectionSet.toArray()[0];
+  let projectsSelectionSet = rootField.selectionSet.toArray();
   let expectedUserField = projectsSelectionSet[3];
 
-  assert.equal(expectedUserField.selectionSet.length, 3);
+  assert.equal(expectedUserField.selectionSet.toArray().length, 3);
 
-  let expectedUserIdField = expectedUserField.selectionSet[0];
+  let expectedUserIdField = expectedUserField.selectionSet.toArray()[0];
   assert.equal(expectedUserIdField instanceof Type.Field, true);
   assert.equal(expectedUserIdField.name, 'id');
 
-  let expectedUserNameField = expectedUserField.selectionSet[1];
+  let expectedUserNameField = expectedUserField.selectionSet.toArray()[1];
   assert.equal(expectedUserNameField instanceof Type.Field, true);
   assert.equal(expectedUserNameField.name, 'name');
 
-  let expectedUserAddressField = expectedUserField.selectionSet[2];
+  let expectedUserAddressField = expectedUserField.selectionSet.toArray()[2];
   assert.equal(expectedUserAddressField instanceof Type.Field, true);
   assert.equal(expectedUserAddressField.name, 'address');
 
-  let expectedUserAddressIdField = expectedUserAddressField.selectionSet[0];
+  let expectedUserAddressIdField = expectedUserAddressField.selectionSet.toArray()[0];
   assert.equal(expectedUserAddressIdField instanceof Type.Field, true);
   assert.equal(expectedUserAddressIdField.name, 'id');
 
-  let expectedUserAddressCityField = expectedUserAddressField.selectionSet[1];
+  let expectedUserAddressCityField = expectedUserAddressField.selectionSet.toArray()[1];
   assert.equal(expectedUserAddressCityField instanceof Type.Field, true);
   assert.equal(expectedUserAddressCityField.name, 'city');
 
-  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet[2];
+  let expectedUserAddressCountryField = expectedUserAddressField.selectionSet.toArray()[2];
   assert.equal(expectedUserAddressCountryField instanceof Type.Field, true);
   assert.equal(expectedUserAddressCountryField.name, 'country');
 });
 
 test('reflexive relationships', function(assert) {
-  let rootField = nodeParseTree.selectionSet[0];
-  let nodeSelectionSet = rootField.selectionSet;
+  let rootField = nodeParseTree.selectionSet.toArray()[0];
+  let nodeSelectionSet = rootField.selectionSet.toArray();
 
   let expectedIdField = nodeSelectionSet[0];
   assert.equal(expectedIdField instanceof Type.Field, true);
@@ -171,11 +171,11 @@ test('reflexive relationships', function(assert) {
   assert.equal(expectedParentField instanceof Type.Field, true);
   assert.equal(expectedParentField.name, 'parent');
 
-  let expectedParentIdField = expectedParentField.selectionSet[0];
+  let expectedParentIdField = expectedParentField.selectionSet.toArray()[0];
   assert.equal(expectedParentIdField instanceof Type.Field, true);
   assert.equal(expectedParentIdField.name, 'id');
 
-  let expectedParentNameField = expectedParentField.selectionSet[1];
+  let expectedParentNameField = expectedParentField.selectionSet.toArray()[1];
   assert.equal(expectedParentNameField instanceof Type.Field, true);
   assert.equal(expectedParentNameField.name, 'name');
 
@@ -183,11 +183,11 @@ test('reflexive relationships', function(assert) {
   assert.equal(expectedChildrenField instanceof Type.Field, true);
   assert.equal(expectedChildrenField.name, 'children');
 
-  let expectedChildrenIdField = expectedChildrenField.selectionSet[0];
+  let expectedChildrenIdField = expectedChildrenField.selectionSet.toArray()[0];
   assert.equal(expectedChildrenIdField instanceof Type.Field, true);
   assert.equal(expectedChildrenIdField.name, 'id');
 
-  let expectedChildrenNameField = expectedChildrenField.selectionSet[1];
+  let expectedChildrenNameField = expectedChildrenField.selectionSet.toArray()[1];
   assert.equal(expectedChildrenNameField instanceof Type.Field, true);
   assert.equal(expectedChildrenNameField.name, 'name');
 });
