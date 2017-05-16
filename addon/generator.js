@@ -42,11 +42,11 @@ export default {
   },
 
   generateSelectionSet(set) {
-    return set.map(field => this.generateField(field)).join('');
+    return set.toArray().map(field => this.generateField(field)).join('');
   },
 
   generateArgumentSet(set) {
-    return set.map(argument => this.generateArgument(argument)).join(this.argumentSeparatorToken);
+    return set.toArray().map(argument => this.generateArgument(argument)).join(this.argumentSeparatorToken);
   },
 
   generateArgument({name, value}) {
