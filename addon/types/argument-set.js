@@ -28,6 +28,14 @@ export default class ArgumentSet {
     return new Array(...this.items);
   }
 
+  get length() {
+    return this.toArray().length;
+  }
+
+  get(index) {
+    return this.toArray()[index];
+  }
+
   static fromQuery(query) {
     let set = new ArgumentSet();
 

@@ -14,4 +14,12 @@ export default class SelectionSet {
   toArray() {
     return new Array(...this.items);
   }
+
+  get length() {
+    return this.toArray().length;
+  }
+
+  get(index) {
+    return this.toArray()[index];
+  }
 }
