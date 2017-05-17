@@ -1,8 +1,7 @@
 import DS from 'ember-data';
 import Ember from 'ember';
 import Compiler from './compiler';
-import parseResponseHeaders from 'ember-data/-private/utils/parse-response-headers';
-import raw from 'ember-ajax/raw';
+import request from 'ember-ajax/request';
 
 export default DS.Adapter.extend({
   endpoint: null,
@@ -270,41 +269,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   ajax: function(url, options) {
-    let adapter = this;
-
-    return new Ember.RSVP.Promise(function(resolve, reject) {
-      raw(url, options).then(function({ jqXHR, payload, response, textStatus }) {
-        adapter.handleResponse(
-          jqXHR.status,
-          parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-          payload,
-          options
-        );
-
-        if (response && response.isAdapterError) {
-          Ember.run.join(null, reject, response);
-        } else {
-          Ember.run.join(null, resolve, response);
-        }
-      }, function(error) {
-        if (errorThrown instanceof Error) {
-          error = errorThrown;
-        } else if (textStatus === 'timeout') {
-          error = new DS.TimeoutError();
-        } else if (textStatus === 'abort') {
-          error = new DS.AbortError();
-        } else {
-          error = adapter.handleResponse(
-            jqXHR.status,
-            parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-            adapter.parseErrorResponse(jqXHR.responseText) || errorThrown,
-            options
-          );
-        }
-
-        Ember.run.join(null, reject, error);
-      });
-    }, `GraphQLAdapter#ajax to '${options.url}' with query '${options.data.query}'`);
+    return request(url, options);
   },
 
   /**
