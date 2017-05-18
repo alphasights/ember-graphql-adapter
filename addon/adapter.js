@@ -283,7 +283,9 @@ export default DS.Adapter.extend({
 
     try {
       json = Ember.$.parseJSON(responseText);
-    } catch (e) {}
+    } catch (e) {
+      // empty
+    }
 
     return json;
   },
