@@ -1,7 +1,7 @@
 import DS from 'ember-data';
 import Ember from 'ember';
 import Compiler from './compiler';
-import parseResponseHeaders from 'ember-data/-private/utils/parse-response-headers';
+import request from 'ember-ajax/request';
 
 export default DS.Adapter.extend({
   endpoint: null,
@@ -257,9 +257,9 @@ export default DS.Adapter.extend({
   request: function(store, type, options) {
     let compiledQuery = this.compile(store, type, options);
     let url = this.endpoint;
-    let ajaxOpts = this.ajaxOptions(url, { query: compiledQuery });
+    let ajaxOpts = this.ajaxOptions({ query: compiledQuery });
 
-    return this.ajax(ajaxOpts);
+    return this.ajax(url, ajaxOpts);
   },
 
   /**
@@ -268,48 +268,8 @@ export default DS.Adapter.extend({
     @params {Object} options
     @return {Promise} promise
   */
-  ajax: function(options) {
-    let adapter = this;
-
-    return new Ember.RSVP.Promise(function(resolve, reject) {
-      options.success = function(payload, textStatus, jqXHR) {
-        let response = adapter.handleResponse(
-          jqXHR.status,
-          parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-          payload,
-          options
-        );
-
-        if (response && response.isAdapterError) {
-          Ember.run.join(null, reject, response);
-        } else {
-          Ember.run.join(null, resolve, response);
-        }
-      };
-
-      options.error = function(jqXHR, textStatus, errorThrown) {
-        let error;
-
-        if (errorThrown instanceof Error) {
-          error = errorThrown;
-        } else if (textStatus === 'timeout') {
-          error = new DS.TimeoutError();
-        } else if (textStatus === 'abort') {
-          error = new DS.AbortError();
-        } else {
-          error = adapter.handleResponse(
-            jqXHR.status,
-            parseResponseHeaders(jqXHR.getAllResponseHeaders()),
-            adapter.parseErrorResponse(jqXHR.responseText) || errorThrown,
-            options
-          );
-        }
-
-        Ember.run.join(null, reject, error);
-      };
-
-      Ember.$.ajax(options);
-    }, `GraphQLAdapter#ajax to '${options.url}' with query '${options.data.query}'`);
+  ajax: function(url, options) {
+    return request(url, options);
   },
 
   /**
@@ -336,9 +296,8 @@ export default DS.Adapter.extend({
     @param {String} url
     @return {Object}
   */
-  ajaxOptions: function(url, data) {
+  ajaxOptions: function(data) {
     let opts =  {
-      'url': url,
       'dataType': 'json',
       'data': data,
       'type': this.httpMethod,
