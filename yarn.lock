@@ -2,15 +2,89 @@
 # yarn lockfile v1
 
 
+"@glimmer/compiler@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/compiler/-/compiler-0.22.1.tgz#70a8a3064ca4d62b15fc3c870ead11e6c7fb00bf"
+  dependencies:
+    "@glimmer/syntax" "^0.22.1"
+    "@glimmer/util" "^0.22.1"
+    "@glimmer/wire-format" "^0.22.1"
+    simple-html-tokenizer "^0.3.0"
+
+"@glimmer/di@^0.1.8":
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/@glimmer/di/-/di-0.1.11.tgz#a6878c07a13a2c2c76fcde598a5c97637bfc4280"
+
 "@glimmer/di@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@glimmer/di/-/di-0.2.0.tgz#73bfd4a6ee4148a80bf092e8a5d29bcac9d4ce7e"
+
+"@glimmer/interfaces@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/interfaces/-/interfaces-0.22.1.tgz#56410f35cc3097314c9c56eca01223714354a2f6"
+  dependencies:
+    "@glimmer/wire-format" "^0.22.1"
+
+"@glimmer/node@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/node/-/node-0.22.1.tgz#caf53983cb42ac0eff54c931a43d92430b8f6217"
+  dependencies:
+    "@glimmer/runtime" "^0.22.1"
+    simple-dom "^0.3.0"
+
+"@glimmer/object-reference@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/object-reference/-/object-reference-0.22.1.tgz#f5f18ffe11f86140921977d6bff3e8d75818494a"
+  dependencies:
+    "@glimmer/reference" "^0.22.1"
+    "@glimmer/util" "^0.22.1"
+
+"@glimmer/object@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/object/-/object-0.22.1.tgz#f560eef3ac1eb4decc173368c44b6cdcc6d62e07"
+  dependencies:
+    "@glimmer/object-reference" "^0.22.1"
+    "@glimmer/util" "^0.22.1"
+
+"@glimmer/reference@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/reference/-/reference-0.22.1.tgz#9aea78e63ddd83f13acad79bd24ae4c4c0457210"
+  dependencies:
+    "@glimmer/util" "^0.22.1"
 
 "@glimmer/resolver@^0.3.0":
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/@glimmer/resolver/-/resolver-0.3.0.tgz#65451a2195259ce26518715631c38dd7c144e821"
   dependencies:
     "@glimmer/di" "^0.2.0"
+
+"@glimmer/runtime@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/runtime/-/runtime-0.22.1.tgz#90077df1b97ffb3efd0709f92fa70ede1301d198"
+  dependencies:
+    "@glimmer/interfaces" "^0.22.1"
+    "@glimmer/object" "^0.22.1"
+    "@glimmer/object-reference" "^0.22.1"
+    "@glimmer/reference" "^0.22.1"
+    "@glimmer/util" "^0.22.1"
+    "@glimmer/wire-format" "^0.22.1"
+
+"@glimmer/syntax@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/syntax/-/syntax-0.22.1.tgz#b4048738fa55c46e337278b2aeb37731509ae284"
+  dependencies:
+    handlebars "^4.0.6"
+    simple-html-tokenizer "^0.3.0"
+
+"@glimmer/util@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/util/-/util-0.22.1.tgz#7be751f77325ac857327f9c786ee2d02fba4d4e1"
+
+"@glimmer/wire-format@^0.22.1":
+  version "0.22.1"
+  resolved "https://registry.yarnpkg.com/@glimmer/wire-format/-/wire-format-0.22.1.tgz#2673bbb1e89805194e9870064c6905af21406ffb"
+  dependencies:
+    "@glimmer/util" "^0.22.1"
 
 abbrev@1:
   version "1.1.0"
@@ -2257,10 +2331,16 @@ ember-runtime-enumerable-includes-polyfill@^1.0.0:
     ember-cli-babel "^5.1.6"
     ember-cli-version-checker "^1.1.6"
 
-ember-source@2.12.1:
-  version "2.12.1"
-  resolved "https://registry.yarnpkg.com/ember-source/-/ember-source-2.12.1.tgz#2d0b6fa1c9ebca668eccc7d49521584301593b7d"
+ember-source@2.13.2:
+  version "2.13.2"
+  resolved "https://registry.yarnpkg.com/ember-source/-/ember-source-2.13.2.tgz#9fa9439a26515890981aa5d466f23da20adccff8"
   dependencies:
+    "@glimmer/compiler" "^0.22.1"
+    "@glimmer/di" "^0.1.8"
+    "@glimmer/node" "^0.22.1"
+    "@glimmer/reference" "^0.22.1"
+    "@glimmer/runtime" "^0.22.1"
+    "@glimmer/util" "^0.22.1"
     broccoli-funnel "^1.0.6"
     broccoli-merge-trees "^1.1.4"
     ember-cli-get-component-path-option "^1.0.0"
@@ -2270,10 +2350,12 @@ ember-source@2.12.1:
     ember-cli-test-info "^1.0.0"
     ember-cli-valid-component-name "^1.0.0"
     ember-cli-version-checker "^1.1.7"
+    handlebars "^4.0.6"
     jquery "^3.1.1"
     resolve "^1.1.7"
     rsvp "^3.4.0"
     simple-dom "^0.3.0"
+    simple-html-tokenizer "^0.3.0"
 
 ember-test-helpers@^0.6.0-beta.1:
   version "0.6.3"
@@ -3044,7 +3126,7 @@ growly@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/growly/-/growly-1.3.0.tgz#f10748cbe76af964b7c96c93c6bcc28af120c081"
 
-handlebars@^4.0.4:
+handlebars@^4.0.4, handlebars@^4.0.6:
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/handlebars/-/handlebars-4.0.6.tgz#2ce4484850537f9c97a8026d5399b935c4ed4ed7"
   dependencies:
@@ -4434,15 +4516,7 @@ qs@6.4.0, qs@^6.2.0, qs@~6.4.0:
   version "6.4.0"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.4.0.tgz#13e26d28ad6b0ffaa91312cd3bf708ed351e7233"
 
-quick-temp@^0.1.0, quick-temp@^0.1.2, quick-temp@^0.1.3, quick-temp@^0.1.5:
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/quick-temp/-/quick-temp-0.1.6.tgz#a6242a15cba9f9cdbd341287b5c569e318eec307"
-  dependencies:
-    mktemp "~0.4.0"
-    rimraf "~2.2.6"
-    underscore.string "~2.3.3"
-
-quick-temp@^0.1.8:
+quick-temp@^0.1.0, quick-temp@^0.1.2, quick-temp@^0.1.3, quick-temp@^0.1.5, quick-temp@^0.1.8:
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/quick-temp/-/quick-temp-0.1.8.tgz#bab02a242ab8fb0dd758a3c9776b32f9a5d94408"
   dependencies:
@@ -4868,6 +4942,10 @@ simple-dom@^0.3.0:
 simple-fmt@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/simple-fmt/-/simple-fmt-0.1.0.tgz#191bf566a59e6530482cb25ab53b4a8dc85c3a6b"
+
+simple-html-tokenizer@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/simple-html-tokenizer/-/simple-html-tokenizer-0.3.0.tgz#9b8b5559d80e331a544dd13dd59382e5d0d94411"
 
 simple-is@~0.2.0:
   version "0.2.0"
@@ -5335,10 +5413,6 @@ uid-number@^0.0.6:
 ultron@1.0.x:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/ultron/-/ultron-1.0.2.tgz#ace116ab557cd197386a4e88f4685378c8b2e4fa"
-
-underscore.string@~2.3.3:
-  version "2.3.3"
-  resolved "https://registry.yarnpkg.com/underscore.string/-/underscore.string-2.3.3.tgz#71c08bf6b428b1133f37e78fa3a21c82f7329b0d"
 
 underscore.string@~3.3.4:
   version "3.3.4"
