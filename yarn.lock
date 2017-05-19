@@ -1990,13 +1990,14 @@ ember-cli-get-dependency-depth@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/ember-cli-get-dependency-depth/-/ember-cli-get-dependency-depth-1.0.0.tgz#e0afecf82a2d52f00f28ab468295281aec368d11"
 
-ember-cli-htmlbars-inline-precompile@0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/ember-cli-htmlbars-inline-precompile/-/ember-cli-htmlbars-inline-precompile-0.4.0.tgz#4a6d2211b804419953104a9231e112dbd2057f3c"
+ember-cli-htmlbars-inline-precompile@0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/ember-cli-htmlbars-inline-precompile/-/ember-cli-htmlbars-inline-precompile-0.4.3.tgz#4123f507fea6c59ba4c272ef7e713a6d55ba06c9"
   dependencies:
     babel-plugin-htmlbars-inline-precompile "^0.2.3"
-    ember-cli-version-checker "^1.2.0"
+    ember-cli-version-checker "^2.0.0"
     hash-for-dep "^1.0.2"
+    silent-error "^1.1.0"
 
 ember-cli-htmlbars@2.0.1:
   version "2.0.1"
@@ -2162,6 +2163,13 @@ ember-cli-version-checker@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/ember-cli-version-checker/-/ember-cli-version-checker-1.2.0.tgz#caa286b77d1b485df5d2f62c67a6f19aa8b582c4"
   dependencies:
+    semver "^5.3.0"
+
+ember-cli-version-checker@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/ember-cli-version-checker/-/ember-cli-version-checker-2.0.0.tgz#e1f7d8e4cdcd752ac35f1611e4daa8836db4c4c7"
+  dependencies:
+    resolve "^1.3.3"
     semver "^5.3.0"
 
 ember-cli@2.13.0:
@@ -4774,7 +4782,7 @@ resolve-from@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-1.0.1.tgz#26cbfe935d1aeeeabb29bc3fe5aeb01e93d44226"
 
-resolve@^1.1.2, resolve@^1.1.6, resolve@^1.1.7, resolve@^1.3.0, resolve@^1.3.2:
+resolve@^1.1.2, resolve@^1.1.6, resolve@^1.1.7, resolve@^1.3.0, resolve@^1.3.2, resolve@^1.3.3:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.3.3.tgz#655907c3469a8680dc2de3a275a8fdd69691f0e5"
   dependencies:
@@ -4937,6 +4945,12 @@ signal-exit@^3.0.0:
 silent-error@^1.0.0, silent-error@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/silent-error/-/silent-error-1.0.1.tgz#71b7d503d1c6f94882b51b56be879b113cb4822c"
+  dependencies:
+    debug "^2.2.0"
+
+silent-error@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/silent-error/-/silent-error-1.1.0.tgz#2209706f1c850a9f1d10d0d840918b46f26e1bc9"
   dependencies:
     debug "^2.2.0"
 
