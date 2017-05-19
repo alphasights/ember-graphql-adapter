@@ -50,7 +50,7 @@ module("integration/adapter - GraphQL adapter", {
 });
 
 function ajaxResponse(value) {
-  adapter.ajax = function({url, data}) {
+  adapter.ajax = function(url, { data }) {
     passedUrl = url;
     passedQuery = data.query;
 
