@@ -9,21 +9,21 @@ test("is stack-like", function(assert) {
 
   set.push(3);
 
-  assert.equal(set[0], 1);
-  assert.equal(set[1], 2);
-  assert.equal(set[2], 3);
+  assert.equal(set.get(0), 1);
+  assert.equal(set.get(1), 2);
+  assert.equal(set.get(2), 3);
 
   let popped = set.pop();
 
   assert.equal(popped, 3);
-  assert.equal(set[2], null);
+  assert.equal(set.get(2), null);
 });
 
 test("it can be iterated over", function(assert) {
   let set = new ArgumentSet(1, 2);
   let acc = [];
 
-  set.forEach(function(el){
+  set.toArray().forEach(function(el){
     acc.push(el);
   });
 
@@ -50,38 +50,38 @@ test("it can be made from a query", function(assert) {
   let set = ArgumentSet.fromQuery({ status: 'active', limit: 10 });
 
   assert.equal(set.length, 2);
-  assert.equal(set[0].name, 'status');
-  assert.equal(set[0].value, 'active');
-  assert.equal(set[1].name, 'limit');
-  assert.equal(set[1].value, 10);
+  assert.equal(set.get(0).name, 'status');
+  assert.equal(set.get(0).value, 'active');
+  assert.equal(set.get(1).name, 'limit');
+  assert.equal(set.get(1).value, 10);
 });
 
 test("does not filter out null arguments from a query", function(assert) {
   let set = ArgumentSet.fromQuery({ status: null, limit: 10 });
 
   assert.equal(set.length, 2);
-  assert.equal(set[0].name, 'status');
-  assert.equal(set[0].value, null);
-  assert.equal(set[1].name, 'limit');
-  assert.equal(set[1].value, 10);
+  assert.equal(set.get(0).name, 'status');
+  assert.equal(set.get(0).value, null);
+  assert.equal(set.get(1).name, 'limit');
+  assert.equal(set.get(1).value, 10);
 });
 
 test("filters out undefined arguments from a query", function(assert) {
   let set = ArgumentSet.fromQuery({ status: undefined, limit: 10 });
 
   assert.equal(set.length, 1);
-  assert.equal(set[0].name, 'limit');
-  assert.equal(set[0].value, 10);
+  assert.equal(set.get(0).name, 'limit');
+  assert.equal(set.get(0).value, 10);
 });
 
 test("it can be made from a nested query", function(assert) {
   let set = ArgumentSet.fromQuery({ project: { id: 1 }, limit: 10 });
 
   assert.equal(set.length, 2);
-  assert.equal(set[0].name, 'project');
-  assert.equal(set[0].value instanceof ArgumentSet, true);
-  assert.equal(set[0].value[0].name, 'id');
-  assert.equal(set[0].value[0].value, 1);
-  assert.equal(set[1].name, 'limit');
-  assert.equal(set[1].value, 10);
+  assert.equal(set.get(0).name, 'project');
+  assert.equal(set.get(0).value instanceof ArgumentSet, true);
+  assert.equal(set.get(0).value.get(0).name, 'id');
+  assert.equal(set.get(0).value.get(0).value, 1);
+  assert.equal(set.get(1).name, 'limit');
+  assert.equal(set.get(1).value, 10);
 });
