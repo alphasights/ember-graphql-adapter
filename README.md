@@ -21,7 +21,7 @@ Create your adapter first
 import GraphQLAdapter from 'ember-graphql-adapter';
 
 export default GraphQLAdapter.extend({
-  endpoint: `${EmberENV.apiBaseUrl}/graph`
+  endpoint: 'http://localhost:3000/graph'
 });
 ```
 
@@ -73,11 +73,10 @@ module Graph
     name "Query"
     description "The query root of this schema"
 
-    field :post do
-      type PostType
+    field :post, PostType do
       argument :id, !types.ID, "The ID of the post"
-      resolve -> (obj, args, ctw) do
-        Post.find(args[:id])
+      resolve -> (_object, arguments, _context) do
+        Post.find(arguments[:id])
       end
     end
   end
@@ -93,11 +92,10 @@ module Graph
     name "Mutation"
     description "Mutations"
 
-    field :postCreate do
-      type PostType
+    field :postCreate, PostType do
       argument :name, !types.String, "The post name"
-      resolve -> (obj, args, ctw) do
-        Post.create(name: args[:name])
+      resolve -> (_object, arguments, _context) do
+        Post.create(name: arguments[:name])
       end
     end
   end
@@ -109,10 +107,10 @@ Now, we can build the whole schema
 ```ruby
 # app/models/graph/schema.rb
 module Graph
-  Schema = GraphQL::Schema.new(
-    query: Graph::QueryType,
-    mutation: Graph::MutationType
-  )
+  Schema = GraphQL::Schema.define do
+    query Graph::QueryType
+    mutation Graph::MutationType
+  end
 end
 ```
 
@@ -121,7 +119,7 @@ In the controller we just delegate to the GraphQL schema
 ```ruby
 # app/controllers/graph_controller.rb
 class GraphController < ApplicationController
-  def index
+  def execute
     render json: ::Graph::Schema.execute(
       params.fetch("query"),
       context: {} # you can pass the current_user here
@@ -134,7 +132,7 @@ Finally, we just expose the GraphQL endpoint in the route
 
 ```ruby
 # config/routes.rb
-get 'graph', to: 'graph#index'
+get 'graph', to: 'graph#execute'
 ```
 
 And that's it!
@@ -144,16 +142,16 @@ And that's it!
 ### Installation
 
 * `git clone https://github.com/alphasights/ember-graphql-adapter.git`
-* `npm install && bower install`
+* `yarn install`
 
 ### Running
 
-* `ember server`
+* `yarn start`
 
 ### Running Tests
 
-* `ember test --server`
+* `yarn run ember test -- --server`
 
 ### Building
 
-* `ember build`
+* `yarn build`
