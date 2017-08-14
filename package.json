@@ -21,7 +21,7 @@
     "ember-cli-babel": "6.0.0"
   },
   "devDependencies": {
-    "broccoli-asset-rev": "2.5.0",
+    "broccoli-asset-rev": "2.6.0",
     "ember-ajax": "3.0.0",
     "ember-cli": "2.13.0",
     "ember-cli-app-version": "3.0.0",
