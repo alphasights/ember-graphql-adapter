@@ -19,7 +19,8 @@ test('all the things', function(assert) {
     new Type.Argument('status', 'active'),
     new Type.Argument('embedded', new Type.ArgumentSet(new Type.Argument('id', 1))),
     new Type.Argument('limit', 10),
-    new Type.Argument('offset', 0)
+    new Type.Argument('offset', 0),
+    new Type.Argument('objectArray', [{ foo: 'bar', bar: 'foo' }])
   );
   let post = new Type.Field('post', 'postAlias', postArgumentSet, postSelectionSet);
 
@@ -27,5 +28,8 @@ test('all the things', function(assert) {
   let operationArgumentSet = new Type.ArgumentSet();
   let operation = new Type.Operation('query', 'postsQuery', operationArgumentSet, operationSelectionSet);
 
-  assert.equal(Generator.generate(operation), `query postsQuery { postAlias: post(ids: ["1","2","3"], status: "active", embedded: { id: 1 }, limit: 10, offset: 0) { id status author { id username } } }`);
+  assert.equal(
+    Generator.generate(operation),
+    `query postsQuery { postAlias: post(ids: ["1","2","3"], status: "active", embedded: { id: 1 }, limit: 10, offset: 0, objectArray: [{ foo: "bar", bar: "foo" }]) { id status author { id username } } }`
+  );
 });
