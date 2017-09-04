@@ -62,8 +62,20 @@ export default {
   },
 
   wrapArrayInStringTokens(array) {
-    return array.map((ele) => {
-      return this.wrapInStringTokens(ele);
+    return array.map(ele => {
+      if (typeof ele === 'object') {
+        let generatedElements = [];
+        let eleKeys = Object.keys(ele);
+
+        eleKeys.forEach(key => {
+          let generatedValue = this.generateArgument({ name: key, value: ele[key] });
+          generatedElements.push(generatedValue);
+        });
+
+        return this.argumentObjectOpeningToken + generatedElements.join(', ') + this.argumentObjectClosingToken;
+      } else {
+        return this.wrapInStringTokens(ele);
+      }
     }).join();
   },
 
