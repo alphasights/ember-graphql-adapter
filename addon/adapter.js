@@ -269,7 +269,19 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   ajax: function(url, options) {
-    return request(url, options);
+    let adapter = this;
+
+    return new Ember.RSVP.Promise((resolve, reject) => {
+      return request(url, options).then(response => {
+        const adapterResponse = adapter.handleResponse(null, null, response);
+
+        if (response && adapterResponse.isAdapterError) {
+          Ember.run.join(null, reject, response);
+        } else {
+          Ember.run.join(null, resolve, response);
+        }
+      });
+    });
   },
 
   /**
