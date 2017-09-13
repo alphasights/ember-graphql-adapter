@@ -280,6 +280,8 @@ export default DS.Adapter.extend({
         } else {
           Ember.run.join(null, resolve, response);
         }
+      }, error => {
+        Ember.run.join(null, reject, error);
       });
     });
   },
