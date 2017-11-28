@@ -32,7 +32,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
         if (type === 'string') {
           if (!Ember.isNone(value)) {
             value = value.replace(/\\/g, '\\\\');
-            value = value.replace(/\"/g, '\\"');
+            value = value.replace(/\"/g, '\\"'); //eslint-disable-line no-useless-escape
           }
         } else {
           let transform = this.transformFor(type);
