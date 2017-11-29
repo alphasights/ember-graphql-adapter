@@ -1,5 +1,5 @@
+import { camelize } from '@ember/string';
 import { test, module } from 'qunit';
-import Ember from 'ember';
 import Parser from 'ember-graphql-adapter/parser';
 import * as Type from 'ember-graphql-adapter/types';
 import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
@@ -7,7 +7,7 @@ import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 
 const normalizeCaseFn = function(string) {
-  return Ember.String.camelize(string);
+  return camelize(string);
 };
 
 let nodeParseTree, projectsParseTree;

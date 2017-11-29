@@ -1,5 +1,9 @@
+import { get } from '@ember/object';
+import $ from 'jquery';
+import { join } from '@ember/runloop';
+import { Promise as EmberPromise } from 'rsvp';
+import { camelize } from '@ember/string';
 import DS from 'ember-data';
-import Ember from 'ember';
 import Compiler from './compiler';
 import request from 'ember-ajax/request';
 import { pluralize } from 'ember-inflector';
@@ -19,7 +23,7 @@ export default DS.Adapter.extend({
     @return {String} string
   */
   normalizeCase: function(string) {
-    return Ember.String.camelize(string);
+    return camelize(string);
   },
 
   /**
@@ -272,17 +276,17 @@ export default DS.Adapter.extend({
   ajax: function(url, options) {
     let adapter = this;
 
-    return new Ember.RSVP.Promise((resolve, reject) => {
+    return new EmberPromise((resolve, reject) => {
       return request(url, options).then(response => {
         const adapterResponse = adapter.handleResponse(null, null, response);
 
         if (response && adapterResponse.isAdapterError) {
-          Ember.run.join(null, reject, response);
+          join(null, reject, response);
         } else {
-          Ember.run.join(null, resolve, response);
+          join(null, resolve, response);
         }
       }, error => {
-        Ember.run.join(null, reject, error);
+        join(null, reject, error);
       });
     });
   },
@@ -297,7 +301,7 @@ export default DS.Adapter.extend({
     var json = responseText;
 
     try {
-      json = Ember.$.parseJSON(responseText);
+      json = $.parseJSON(responseText);
     } catch (e) {
       // empty
     }
@@ -319,7 +323,7 @@ export default DS.Adapter.extend({
       'context': this
     };
 
-    let headers = Ember.get(this, 'headers');
+    let headers = get(this, 'headers');
     if (headers !== undefined) {
       opts.beforeSend = function (xhr) {
         Object.keys(headers).forEach((key) =>  xhr.setRequestHeader(key, headers[key]));

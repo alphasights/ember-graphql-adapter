@@ -1,4 +1,4 @@
-import Ember from 'ember';
+import { typeOf } from '@ember/utils';
 
 export default {
   openingToken: ' {',
@@ -50,11 +50,11 @@ export default {
   },
 
   generateArgument({name, value}) {
-    if (Ember.typeOf(value) === 'string') {
+    if (typeOf(value) === 'string') {
       value = this.wrapInStringTokens(value);
-    } else if (Ember.typeOf(value) === 'array') {
+    } else if (typeOf(value) === 'array') {
       value = this.argumentArrayOpeningToken + this.wrapArrayInStringTokens(value) + this.argumentArrayClosingToken;
-    } else if (Ember.typeOf(value) === 'object') {
+    } else if (typeOf(value) === 'object') {
       value = this.argumentObjectOpeningToken + this.generateArgumentSet(value) + this.argumentObjectClosingToken;
     }
 

@@ -1,5 +1,5 @@
+import { camelize } from '@ember/string';
 import { test, module } from 'qunit';
-import Ember from 'ember';
 import ModelDouble from '../helpers/model-double';
 import StoreDouble from '../helpers/store-double';
 import Compiler from 'ember-graphql-adapter/compiler';
@@ -7,7 +7,7 @@ import Compiler from 'ember-graphql-adapter/compiler';
 module('unit:ember-graphql-adapter/compiler');
 
 const normalizeCaseFn = function(string) {
-  return Ember.String.camelize(string);
+  return camelize(string);
 };
 
 test("takes an Model and responds with GraphQL query", function(assert) {
