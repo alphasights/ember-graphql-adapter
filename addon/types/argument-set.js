@@ -1,7 +1,5 @@
+import { typeOf } from '@ember/utils';
 import { Argument } from '../types';
-import Ember from 'ember';
-
-const { typeOf } = Ember;
 
 export default class ArgumentSet {
   constructor(...args) {

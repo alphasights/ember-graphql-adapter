@@ -1,9 +1,8 @@
+import { run } from '@ember/runloop';
 import setupStore from 'dummy/tests/helpers/store';
-import Ember from 'ember';
 import DS from 'ember-data';
-import {module, test} from 'qunit';
+import { module, test } from 'qunit';
 
-let run = Ember.run;
 let env, store;
 let Address, Blog, Profile, Post, User;
 

@@ -1,13 +1,9 @@
+import { assert } from '@ember/debug';
+import { isNone, typeOf } from '@ember/utils';
+import { get } from '@ember/object';
+import { camelize } from '@ember/string';
 import DS from 'ember-data';
-import Ember from 'ember';
-
-const {
-  String: {
-    camelize,
-    pluralize,
-    singularize
-  }
-} = Ember;
+import { pluralize, singularize } from 'ember-inflector';
 
 export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
   isNewSerializerAPI: true,
@@ -18,7 +14,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
 
   serializeIntoHash(hash, typeClass, snapshot, options) {
     if (snapshot.id) {
-      hash[Ember.get(this, 'primaryKey')] = snapshot.id;
+      hash[get(this, 'primaryKey')] = snapshot.id;
     }
     this._super(hash, typeClass, snapshot, options);
   },
@@ -30,7 +26,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
       let value = snapshot.attr(key);
       if (type) {
         if (type === 'string') {
-          if (!Ember.isNone(value)) {
+          if (!isNone(value)) {
             value = value.replace(/\\/g, '\\\\');
             value = value.replace(/\"/g, '\\"'); //eslint-disable-line no-useless-escape
           }
@@ -87,11 +83,11 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
 
     const type = this.normalizeCase(primaryModelClass.modelName);
     let root = data[type];
-    if (Ember.typeOf(root) === 'undefined') {
+    if (typeOf(root) === 'undefined') {
       root = data[pluralize(type)];
     }
 
-    Ember.assert('The root of the result must be the model class name or the plural model class name', Ember.typeOf(root) !== 'undefined');
+    assert('The root of the result must be the model class name or the plural model class name', typeOf(root) !== 'undefined');
 
     if (meta) { root['meta'] = meta; }
 
@@ -111,7 +107,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
         if (kind === 'belongsTo') {
           data = this.extractRelationship(type, relationshipHash);
         } else if (kind === 'hasMany') {
-          if (!Ember.isNone(relationshipHash)) {
+          if (!isNone(relationshipHash)) {
             data = new Array(relationshipHash.length);
             for (let i = 0, l = relationshipHash.length; i < l; i++) {
               let item = relationshipHash[i];

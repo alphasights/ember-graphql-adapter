@@ -1,12 +1,14 @@
+import { underscore } from '@ember/string';
+import { copy } from '@ember/object/internals';
+import RSVP from 'rsvp';
+import { run } from '@ember/runloop';
 import setupStore from 'dummy/tests/helpers/store';
-import Ember from 'ember';
 import DS from 'ember-data';
-import {module, test} from 'qunit';
-import {Adapter, Serializer} from 'ember-graphql-adapter';
+import { module, test } from 'qunit';
+import { Adapter, Serializer } from 'ember-graphql-adapter';
 
 var env, store, adapter;
 var passedUrl, passedQuery;
-var run = Ember.run;
 var Author, Profile, Post, Comment, PostCategory;
 
 module("integration/adapter - GraphQL adapter", {
@@ -54,7 +56,7 @@ function ajaxResponse(value) {
     passedUrl = url;
     passedQuery = data.query;
 
-    return run(Ember.RSVP, 'resolve', Ember.copy(value, true));
+    return run(RSVP, 'resolve', copy(value, true));
   };
 }
 
@@ -495,7 +497,7 @@ test('Resources and attributes with multiple words are snake cased in times of n
   assert.expect(5);
 
   let normalizeCaseFn = function(name) {
-    return Ember.String.underscore(name);
+    return underscore(name);
   };
 
   adapter.normalizeCase = normalizeCaseFn;
@@ -534,7 +536,7 @@ test('Mutation names can be snake cased too', function(assert) {
   assert.expect(4);
 
   let normalizeCaseFn = function(name) {
-    return Ember.String.underscore(name);
+    return underscore(name);
   };
 
   adapter.normalizeCase = normalizeCaseFn;
