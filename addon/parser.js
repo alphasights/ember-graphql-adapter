@@ -1,5 +1,5 @@
 import * as Type from 'ember-graphql-adapter/types';
-import Ember from 'ember';
+import { singularize } from 'ember-inflector';
 
 class Parser {
   constructor({normalizeCaseFn, parseSelectionSet}) {
@@ -66,7 +66,7 @@ class Parser {
 
   _buildAsyncRelationship(relName, { kind }) {
     let suffix = kind === 'hasMany' ? 'Ids' : 'Id';
-    return this._buildField(Ember.String.singularize(relName) + suffix);
+    return this._buildField(singularize(relName) + suffix);
   }
 }
 

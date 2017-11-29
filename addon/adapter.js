@@ -2,6 +2,7 @@ import DS from 'ember-data';
 import Ember from 'ember';
 import Compiler from './compiler';
 import request from 'ember-ajax/request';
+import { pluralize } from 'ember-inflector';
 
 export default DS.Adapter.extend({
   endpoint: null,
@@ -59,7 +60,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll: function(store, type) {
-    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
       'operationName': operationName,
@@ -87,7 +88,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   query: function(store, type, query) {
-    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
       'operationName': operationName,
@@ -137,7 +138,7 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findMany(store, type, ids) {
-    let operationName = this.normalizeCase(Ember.String.pluralize(type.modelName));
+    let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
       'operationName': operationName,
