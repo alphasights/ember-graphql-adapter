@@ -1,13 +1,8 @@
 import DS from 'ember-data';
 import Ember from 'ember';
+import { pluralize, singularize } from 'ember-inflector';
 
-const {
-  String: {
-    camelize,
-    pluralize,
-    singularize
-  }
-} = Ember;
+const { String: { camelize } } = Ember;
 
 export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
   isNewSerializerAPI: true,
