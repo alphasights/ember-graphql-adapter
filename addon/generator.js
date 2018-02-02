@@ -1,4 +1,5 @@
 import { typeOf } from '@ember/utils';
+import ArgumentSet from 'ember-graphql-adapter/types/argument-set';
 
 export default {
   openingToken: ' {',
@@ -55,6 +56,7 @@ export default {
     } else if (typeOf(value) === 'array') {
       value = this.argumentArrayOpeningToken + this.wrapArrayInStringTokens(value) + this.argumentArrayClosingToken;
     } else if (typeOf(value) === 'object') {
+      value = ArgumentSet.fromQuery(value);
       value = this.argumentObjectOpeningToken + this.generateArgumentSet(value) + this.argumentObjectClosingToken;
     }
 
