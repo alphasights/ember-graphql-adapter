@@ -5,6 +5,8 @@ import * as Type from 'ember-graphql-adapter/types';
 module('unit:ember-graphql-adapter/generator');
 
 test('all the things', function(assert) {
+  assert.expect(1)
+
   let fieldId = new Type.Field('id');
   let fieldStatus = new Type.Field('status');
 
@@ -20,7 +22,8 @@ test('all the things', function(assert) {
     new Type.Argument('embedded', new Type.ArgumentSet(new Type.Argument('id', 1))),
     new Type.Argument('limit', 10),
     new Type.Argument('offset', 0),
-    new Type.Argument('objectArray', [{ foo: 'bar', bar: 'foo' }])
+    new Type.Argument('objectArray', [{ foo: 'bar', bar: 'foo' }]),
+    new Type.Argument('object', { id: 'hi' })
   );
   let post = new Type.Field('post', 'postAlias', postArgumentSet, postSelectionSet);
 
@@ -30,6 +33,6 @@ test('all the things', function(assert) {
 
   assert.equal(
     Generator.generate(operation),
-    `query postsQuery { postAlias: post(ids: ["1","2","3"], status: "active", embedded: { id: 1 }, limit: 10, offset: 0, objectArray: [{ foo: "bar", bar: "foo" }]) { id status author { id username } } }`
+    `query postsQuery { postAlias: post(ids: ["1","2","3"], status: "active", embedded: { id: 1 }, limit: 10, offset: 0, objectArray: [{ foo: "bar", bar: "foo" }], object: { id: "hi" }) { id status author { id username } } }`
   );
 });
