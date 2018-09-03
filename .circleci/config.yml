@@ -1,0 +1,14 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:8-browsers
+
+    steps:
+      - checkout
+      - run: yarn --ignore-engines --frozen-lockfile
+      - run: yarn test
+      - save_cache:
+          key: node-modules-cache
+          paths:
+            - ~/.cache/yarn
