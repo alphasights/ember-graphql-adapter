@@ -642,3 +642,49 @@ test('Saving a record with a backslash in a string attribute', function(assert) 
     });
   });
 });
+
+test('query - querying a record with double quotes in the query', function(assert) {
+  assert.expect(4);
+
+  ajaxResponse({
+    data: {
+      posts: [{
+        id: '1',
+        name: 'Ember.js "rocks"'
+      }]
+    }
+  });
+
+  run(function() {
+    store.query('post', { name: 'Ember.js "rocks"' }).then(function(posts) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query posts { posts(name: "Ember.js \\"rocks\\"") { id name } }');
+
+      assert.equal(posts.get('length'), 1);
+      assert.equal(posts.get('firstObject.name'), 'Ember.js "rocks"');
+    });
+  });
+});
+
+test('query - querying a record with backslashes in the query', function(assert) {
+  assert.expect(4);
+
+  ajaxResponse({
+    data: {
+      posts: [{
+        id: '1',
+        name: 'Ember.js \\ rocks'
+      }]
+    }
+  });
+
+  run(function() {
+    store.query('post', { name: 'Ember.js \\ rocks' }).then(function(posts) {
+      assert.equal(passedUrl, '/graph');
+      assert.equal(passedQuery, 'query posts { posts(name: "Ember.js \\\\ rocks") { id name } }');
+
+      assert.equal(posts.get('length'), 1);
+      assert.equal(posts.get('firstObject.name'), 'Ember.js \\ rocks');
+    });
+  });
+});
