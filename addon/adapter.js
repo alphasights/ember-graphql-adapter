@@ -27,6 +27,31 @@ export default DS.Adapter.extend({
   },
 
   /**
+    Normalizes query parameters to avoid ParseErrors on the server side.
+
+    @method normalizeQuery
+    @param {Object} query
+    @return {Object} normalized query
+  */
+  normalizeQuery: function(query) {
+    let normalizedQuery = {};
+
+    Object.keys(query).forEach((key) => {
+      let value = query[key];
+
+      if (typeof value === 'string') {
+        normalizedQuery[key] = value
+          .replace(/\\/g, '\\\\')
+          .replace(/\"/g, '\\"'); //eslint-disable-line no-useless-escape
+      } else {
+        normalizedQuery[key] = value;
+      }
+    });
+
+    return normalizedQuery;
+  },
+
+  /**
     Called by the store in order to fetch the JSON for a given
     type and ID.
 
@@ -99,7 +124,7 @@ export default DS.Adapter.extend({
       'operationType': 'query',
       'parseSelectionSet': true,
       'rootFieldName': operationName,
-      'rootFieldQuery': query
+      'rootFieldQuery': this.normalizeQuery(query)
     });
   },
 
@@ -128,7 +153,7 @@ export default DS.Adapter.extend({
       'operationType': 'query',
       'parseSelectionSet': true,
       'rootFieldName': operationName,
-      'rootFieldQuery': query
+      'rootFieldQuery': this.normalizeQuery(query)
     });
   },
 
