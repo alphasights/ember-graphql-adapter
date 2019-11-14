@@ -44,7 +44,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
         payloadKey = this.keyForAttribute(key);
       }
 
-      json[payloadKey] = value;
+      json[payloadKey] = typeof value !== 'undefined' ? value : null;
     }
   },
 
