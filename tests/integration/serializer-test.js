@@ -4,7 +4,7 @@ import DS from 'ember-data';
 import { module, test } from 'qunit';
 
 let env, store;
-let Address, Blog, Profile, Post, User;
+let Address, Blog, Profile, Post, User, NullUndefined;
 
 module("integration/serializer - GraphQL serializer", {
   beforeEach() {
@@ -31,10 +31,16 @@ module("integration/serializer - GraphQL serializer", {
       profile: DS.belongsTo('profile', { async: false })
     });
 
+    NullUndefined = DS.Model.extend({
+      undefinedStringField: DS.attr('string'),
+      nullStringField: DS.attr('string'),
+    });
+
     env = setupStore({
       adapter: '-graphql',
       address: Address,
       blog: Blog,
+      nullUndefined: NullUndefined,
       post: Post,
       profile: Profile,
       user: User
@@ -364,6 +370,30 @@ test('serialize - simple', function(assert) {
   run(function() {
     let blog = store.peekRecord('blog', 1);
     assert.deepEqual(blog.serialize(), expected);
+  });
+});
+
+test('serialize - extra simple null undefined cases', function(assert) {
+  assert.expect(1);
+
+  run(function() {
+    store.push({
+      data: {
+        type: 'null-undefined',
+        id: '1',
+        attributes: { nullStringField: null, undefinedStringField: undefined },
+      }
+    });
+  });
+
+  let expected = {
+    'nullStringField': null,
+    'undefinedStringField': null
+  };
+
+  run(function() {
+    let entity = store.peekRecord('null-undefined', 1);
+    assert.deepEqual(entity.serialize(), expected);
   });
 });
 
