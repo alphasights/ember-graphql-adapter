@@ -36,7 +36,7 @@ class Parser {
             field = this._buildAsyncRelationship(relName, relationship);
           } else {
             let relModel = store.modelFor(type);
-            if (this.visited.indexOf(relName) === -1) {
+            if (this.visited.indexOf(relName) === -1 || options.resolveAlways) {
               field = new Type.Field(
                 this.normalizeCaseFn(relName),
                 null,
