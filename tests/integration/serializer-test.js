@@ -1,337 +1,372 @@
-import { run } from '@ember/runloop';
-import setupStore from 'dummy/tests/helpers/store';
-import DS from 'ember-data';
+import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
+import { setupTest } from 'ember-qunit';
 import { module, test } from 'qunit';
+import GraphQLAdapter, { Serializer } from 'ember-graphql-adapter';
 
-let env, store;
-let Address, Blog, Profile, Post, User, NullUndefined;
+class Address extends Model {
+  @attr('string') city;
+}
 
-module("integration/serializer - GraphQL serializer", {
-  beforeEach() {
-    Address = DS.Model.extend({
-      city: DS.attr('string')
-    });
+class Blog extends Model {
+  @attr('string') title;
+  @hasMany('post', { async: true }) posts;
+}
 
-    Blog = DS.Model.extend({
-      title: DS.attr('string'),
-      posts: DS.hasMany('post', { async: true })
-    });
+class Post extends Model {
+  @attr('string') title;
+}
 
-    Post = DS.Model.extend({
-      title: DS.attr('string')
-    });
+class Profile extends Model {
+  @attr('number') age;
+  @hasMany('address', { async: false }) addresses;
+}
 
-    Profile = DS.Model.extend({
-      age: DS.attr('number'),
-      addresses: DS.hasMany('address', { async: false })
-    });
+class User extends Model {
+  @attr('string') name;
+  @belongsTo('profile', { async: false }) profile;
+}
 
-    User = DS.Model.extend({
-      name: DS.attr('string'),
-      profile: DS.belongsTo('profile', { async: false })
-    });
+class NullUndefined extends Model {
+  @attr('string') undefinedStringField;
+  @attr('string') nullStringField;
+}
 
-    NullUndefined = DS.Model.extend({
-      undefinedStringField: DS.attr('string'),
-      nullStringField: DS.attr('string'),
-    });
+module('integration/serializer - GraphQL serializer', function (hooks) {
+  setupTest(hooks);
 
-    env = setupStore({
-      adapter: '-graphql',
-      address: Address,
-      blog: Blog,
-      nullUndefined: NullUndefined,
-      post: Post,
-      profile: Profile,
-      user: User
-    });
+  hooks.beforeEach(function () {
+    this.owner.register('model:address', Address);
+    this.owner.register('model:blog', Blog);
+    this.owner.register('model:post', Post);
+    this.owner.register('model:profile', Profile);
+    this.owner.register('model:user', User);
+    this.owner.register('model:null-undefined', NullUndefined);
 
-    store = env.store;
-  },
+    this.owner.register('serializer:application', Serializer);
+    this.owner.register('adapter:application', GraphQLAdapter);
 
-  afterEach() {
-    run(env.store, 'destroy');
-  }
-});
+    this.store = this.owner.lookup('service:store');
+    this.adapter = this.store.adapterFor('post');
+  });
 
-test('normalize - null record', function(assert) {
-  assert.expect(1);
+  test('normalize - null record', function (assert) {
+    assert.expect(1);
 
-  let id = '1';
-  let method = 'findRecord';
-  let modelName = 'post';
+    let id = '1';
+    let method = 'findRecord';
+    let modelName = 'post';
 
-  let payload = {
-    'data': {
-      'post': null
-    }
-  };
+    let payload = {
+      data: {
+        post: null,
+      },
+    };
 
-  let expected = {
-    'data': null,
-    'included': []
-  };
+    let expected = {
+      data: null,
+      included: [],
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('normalize - single record', function(assert) {
-  assert.expect(1);
+  test('normalize - single record', function (assert) {
+    assert.expect(1);
 
-  let id = '1';
-  let method = 'findRecord';
-  let modelName = 'post';
+    let id = '1';
+    let method = 'findRecord';
+    let modelName = 'post';
 
-  let payload = {
-    'data': {
-      'post': {
-        'id': '1',
-        'title': 'The post title'
-      }
-    }
-  };
-
-  let expected = {
-    'data': {
-      'type': 'post',
-      'id': '1',
-      'attributes': {
-        'title': 'The post title'
+    let payload = {
+      data: {
+        post: {
+          id: '1',
+          title: 'The post title',
+        },
       },
-      'relationships': {}
-    },
-    'included': []
-  };
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let expected = {
+      data: {
+        type: 'post',
+        id: '1',
+        attributes: {
+          title: 'The post title',
+        },
+        relationships: {},
+      },
+      included: [],
+    };
+
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('normalize - multiple records', function(assert) {
-  assert.expect(1);
+  test('normalize - multiple records', function (assert) {
+    assert.expect(1);
 
-  let id = '1'; //doesn't matter
-  let method = 'query';
-  let modelName = 'post';
+    let id = '1'; //doesn't matter
+    let method = 'query';
+    let modelName = 'post';
 
-  let payload = {
-    'data': {
-      'posts': [{
-        'id': '1',
-        'title': 'The post title'
-      }, {
-        'id': '2',
-        'title': 'The other post title'
-      }]
-    }
-  };
-
-  let expected = {
-    'data': [{
-      'type': 'post',
-      'id': '1',
-      'attributes': {
-        'title': 'The post title'
+    let payload = {
+      data: {
+        posts: [
+          {
+            id: '1',
+            title: 'The post title',
+          },
+          {
+            id: '2',
+            title: 'The other post title',
+          },
+        ],
       },
-      'relationships': {}
-    }, {
-      'type': 'post',
-      'id': '2',
-      'attributes': {
-        'title': 'The other post title'
-      },
-      'relationships': {}
-    }],
-    'included': []
-  };
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let expected = {
+      data: [
+        {
+          type: 'post',
+          id: '1',
+          attributes: {
+            title: 'The post title',
+          },
+          relationships: {},
+        },
+        {
+          type: 'post',
+          id: '2',
+          attributes: {
+            title: 'The other post title',
+          },
+          relationships: {},
+        },
+      ],
+      included: [],
+    };
+
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('normalize - asynchronous relationships', function(assert) {
-  assert.expect(1);
+  test('normalize - asynchronous relationships', function (assert) {
+    assert.expect(1);
 
-  let id = '1';
-  let method = 'findRecord';
-  let modelName = 'blog';
+    let id = '1';
+    let method = 'findRecord';
+    let modelName = 'blog';
 
-  let payload = {
-    'data': {
-      'blog': {
-        'id': '1',
-        'title': 'The blog title',
-        'postIds': ['3', '4']
-      }
-    }
-  };
-
-  let expected = {
-    'data': {
-      'type': 'blog',
-      'id': '1',
-      'attributes': {
-        'title': 'The blog title'
+    let payload = {
+      data: {
+        blog: {
+          id: '1',
+          title: 'The blog title',
+          postIds: ['3', '4'],
+        },
       },
-      'relationships': {
-        'posts': {
-          'data': [
-            { 'type': 'post', 'id': '3' },
-            { 'type': 'post', 'id': '4' }
-          ]
-        }
-      }
-    },
-    'included': []
-  };
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let expected = {
+      data: {
+        type: 'blog',
+        id: '1',
+        attributes: {
+          title: 'The blog title',
+        },
+        relationships: {
+          posts: {
+            data: [
+              { type: 'post', id: '3' },
+              { type: 'post', id: '4' },
+            ],
+          },
+        },
+      },
+      included: [],
+    };
+
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('normalize - synchronous relationships', function(assert) {
-  assert.expect(1);
+  test('normalize - synchronous relationships', function (assert) {
+    assert.expect(1);
 
-  let id = '1';
-  let method = 'findRecord';
-  let modelName = 'user';
+    let id = '1';
+    let method = 'findRecord';
+    let modelName = 'user';
 
-  let payload = {
-    'data': {
-      'user': {
-        'id': '1',
-        'name': 'Dan Brown',
-        'profile': {
-          'id': '1',
-          'age': 45,
-          'addresses': [{
-            'id': '1',
-            'city': 'New York, NY'
-          }, {
-            'id': '2',
-            'city': 'Boston, MA',
-          }]
-        }
-      }
-    }
-  };
-
-  let expected = {
-    'data': {
-      'type': 'user',
-      'id': '1',
-      'attributes': { 'name': 'Dan Brown' },
-      'relationships': {
-        'profile': {
-          'data': { 'type': 'profile', 'id': '1' }
-        }
-      }
-    },
-    'included': [{
-      'type': 'profile',
-      'id': '1',
-      'attributes': { 'age': 45 },
-      'relationships': {
-        'addresses': {
-          'data': [
-            { 'type': 'address', 'id': '1' },
-            { 'type': 'address', 'id': '2' }
-          ]
-        }
-      }
-    }, {
-      'type': 'address',
-      'id': '1',
-      'attributes': {
-        'city': 'New York, NY'
+    let payload = {
+      data: {
+        user: {
+          id: '1',
+          name: 'Dan Brown',
+          profile: {
+            id: '1',
+            age: 45,
+            addresses: [
+              {
+                id: '1',
+                city: 'New York, NY',
+              },
+              {
+                id: '2',
+                city: 'Boston, MA',
+              },
+            ],
+          },
+        },
       },
-      'relationships': {}
-    }, {
-      'type': 'address',
-      'id': '2',
-      'attributes': {
-        'city': 'Boston, MA'
-      },
-      'relationships': {}
-    }]
-  };
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let expected = {
+      data: {
+        type: 'user',
+        id: '1',
+        attributes: { name: 'Dan Brown' },
+        relationships: {
+          profile: {
+            data: { type: 'profile', id: '1' },
+          },
+        },
+      },
+      included: [
+        {
+          type: 'profile',
+          id: '1',
+          attributes: { age: 45 },
+          relationships: {
+            addresses: {
+              data: [
+                { type: 'address', id: '1' },
+                { type: 'address', id: '2' },
+              ],
+            },
+          },
+        },
+        {
+          type: 'address',
+          id: '1',
+          attributes: {
+            city: 'New York, NY',
+          },
+          relationships: {},
+        },
+        {
+          type: 'address',
+          id: '2',
+          attributes: {
+            city: 'Boston, MA',
+          },
+          relationships: {},
+        },
+      ],
+    };
+
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('normalize - meta', function(assert) {
-  assert.expect(1);
+  test('normalize - meta', function (assert) {
+    assert.expect(1);
 
-  let id = '1';
-  let method = 'query';
-  let modelName = 'post';
+    let id = '1';
+    let method = 'query';
+    let modelName = 'post';
 
-  let payload = {
-    'data': {
-      'posts': [{
-        'id': '1',
-        'title': 'The post title'
-      }]
-    },
-    'meta': {
-      'total_count': 1,
-      'total_pages': 1,
-      'current_page': 1
-    }
-  };
-
-  let expected = {
-    'data': [{
-      'type': 'post',
-      'id': '1',
-      'attributes': {
-        'title': 'The post title'
+    let payload = {
+      data: {
+        posts: [
+          {
+            id: '1',
+            title: 'The post title',
+          },
+        ],
       },
-      'relationships': {}
-    }],
-    'included': [],
-    'meta': {
-      'total_count': 1,
-      'total_pages': 1,
-      'current_page': 1
-    }
-  };
+      meta: {
+        total_count: 1,
+        total_pages: 1,
+        current_page: 1,
+      },
+    };
 
-  run(function() {
-    let model = store.modelFor(modelName);
-    let serializer = store.serializerFor(modelName);
-    let result = serializer.normalizeResponse(store, model, payload, id, method);
+    let expected = {
+      data: [
+        {
+          type: 'post',
+          id: '1',
+          attributes: {
+            title: 'The post title',
+          },
+          relationships: {},
+        },
+      ],
+      included: [],
+      meta: {
+        total_count: 1,
+        total_pages: 1,
+        current_page: 1,
+      },
+    };
+
+    let model = this.store.modelFor(modelName);
+    let serializer = this.store.serializerFor(modelName);
+    let result = serializer.normalizeResponse(
+      this.store,
+      model,
+      payload,
+      id,
+      method
+    );
     assert.deepEqual(result, expected);
   });
-});
 
-test('serialize - simple', function(assert) {
-  assert.expect(1);
+  test('serialize - simple', function (assert) {
+    assert.expect(1);
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'blog',
         id: '1',
@@ -340,125 +375,128 @@ test('serialize - simple', function(assert) {
           posts: {
             data: [
               { type: 'post', id: '1' },
-              { type: 'post', id: '2' }
-            ]
-          }
-        }
-      }
+              { type: 'post', id: '2' },
+            ],
+          },
+        },
+      },
     });
 
-    store.push({
-      data: [{
-        type: 'post',
-        id: '1',
-        attributes: { title: 'Deception Point' },
-        relationships: {}
-      }, {
-        type: 'post',
-        id: '2',
-        attributes: { title: 'Angels & Demons' },
-        relationships: {}
-      }]
+    this.store.push({
+      data: [
+        {
+          type: 'post',
+          id: '1',
+          attributes: { title: 'Deception Point' },
+          relationships: {},
+        },
+        {
+          type: 'post',
+          id: '2',
+          attributes: { title: 'Angels & Demons' },
+          relationships: {},
+        },
+      ],
     });
-  });
 
-  let expected = {
-    'title': 'Book reviews',
-    'postIds': ['1', '2']
-  };
+    let expected = {
+      title: 'Book reviews',
+      postIds: ['1', '2'],
+    };
 
-  run(function() {
-    let blog = store.peekRecord('blog', 1);
+    let blog = this.store.peekRecord('blog', 1);
     assert.deepEqual(blog.serialize(), expected);
   });
-});
 
-test('serialize - extra simple null undefined cases', function(assert) {
-  assert.expect(1);
+  test('serialize - extra simple null undefined cases', function (assert) {
+    assert.expect(1);
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'null-undefined',
         id: '1',
-        attributes: { nullStringField: null, undefinedStringField: undefined },
-      }
+        attributes: {
+          nullStringField: null,
+          undefinedStringField: undefined,
+        },
+      },
     });
-  });
 
-  let expected = {
-    'nullStringField': null,
-    'undefinedStringField': null
-  };
+    let expected = {
+      nullStringField: null,
+      undefinedStringField: null,
+    };
 
-  run(function() {
-    let entity = store.peekRecord('null-undefined', 1);
+    let entity = this.store.peekRecord('null-undefined', 1);
     assert.deepEqual(entity.serialize(), expected);
   });
-});
 
-test('serialize - complex', function(assert) {
-  assert.expect(1);
+  test('serialize - complex', function (assert) {
+    assert.expect(1);
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'user',
         id: '1',
         attributes: { name: 'Dan Brown' },
         relationships: {
           profile: {
-            data: { type: 'profile', id: '1' }
-          }
-        }
+            data: { type: 'profile', id: '1' },
+          },
+        },
       },
-      included: [{
-        type: 'profile',
-        id: '1',
-        attributes: { age: '45' },
-        relationships: {
-          addresses: {
-            data: [
-              { type: 'address', id: '1' },
-              { type: 'address', id: '2' }
-            ]
-          }
-        }
-      }, {
-        type: 'address',
-        id: '1',
-        attributes: {
-          city: 'New York, NY'
+      included: [
+        {
+          type: 'profile',
+          id: '1',
+          attributes: { age: '45' },
+          relationships: {
+            addresses: {
+              data: [
+                { type: 'address', id: '1' },
+                { type: 'address', id: '2' },
+              ],
+            },
+          },
         },
-        relationships: {}
-      }, {
-        type: 'address',
-        id: '2',
-        attributes: {
-          city: 'Boston, MA'
+        {
+          type: 'address',
+          id: '1',
+          attributes: {
+            city: 'New York, NY',
+          },
+          relationships: {},
         },
-        relationships: {}
-      }]
+        {
+          type: 'address',
+          id: '2',
+          attributes: {
+            city: 'Boston, MA',
+          },
+          relationships: {},
+        },
+      ],
     });
-  });
 
-  let expected = {
-    'name': 'Dan Brown',
-    'profile': {
-      'id': '1',
-      'age': 45,
-      'addresses': [{
-        'id': '1',
-        'city': 'New York, NY'
-      }, {
-        'id': '2',
-        'city': 'Boston, MA',
-      }]
-    }
-  };
+    let expected = {
+      name: 'Dan Brown',
+      profile: {
+        id: '1',
+        age: 45,
+        addresses: [
+          {
+            id: '1',
+            city: 'New York, NY',
+          },
+          {
+            id: '2',
+            city: 'Boston, MA',
+          },
+        ],
+      },
+    };
 
-  run(function() {
-    let user = store.peekRecord('user', 1);
+    let user = this.store.peekRecord('user', 1);
     assert.deepEqual(user.serialize(), expected);
   });
 });

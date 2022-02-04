@@ -2,7 +2,7 @@ import * as Type from 'ember-graphql-adapter/types';
 import { singularize } from 'ember-inflector';
 
 class Parser {
-  constructor({normalizeCaseFn, parseSelectionSet}) {
+  constructor({ normalizeCaseFn, parseSelectionSet }) {
     this.agenda = [];
     this.normalizeCaseFn = normalizeCaseFn;
     this.parseSelectionSet = parseSelectionSet;
@@ -75,5 +75,5 @@ export default {
     let parser = new Parser(options);
 
     return parser.parse(model, store, operation, rootField);
-  }
+  },
 };

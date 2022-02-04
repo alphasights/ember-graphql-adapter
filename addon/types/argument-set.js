@@ -7,7 +7,7 @@ export default class ArgumentSet {
   }
 
   push(...args) {
-    let filteredArgs = args.filter(arg => {
+    let filteredArgs = args.filter((arg) => {
       if (typeOf(arg) === 'object') {
         return typeOf(arg.value) !== 'undefined';
       } else {

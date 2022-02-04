@@ -1,23 +1,25 @@
 import { assert } from '@ember/debug';
 import { isNone, typeOf } from '@ember/utils';
-import { get } from '@ember/object';
 import { camelize } from '@ember/string';
-import DS from 'ember-data';
 import { pluralize, singularize } from 'ember-inflector';
+import JSONSerializer from '@ember-data/serializer/json';
+import { EmbeddedRecordsMixin } from '@ember-data/serializer/rest';
 
-export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
-  isNewSerializerAPI: true,
+export default class GraphqlSerialize extends JSONSerializer.extend(
+  EmbeddedRecordsMixin
+) {
+  isNewSerializerAPI = true;
 
   normalizeCase(string) {
     return camelize(string);
-  },
+  }
 
   serializeIntoHash(hash, typeClass, snapshot, options) {
     if (snapshot.id) {
-      hash[get(this, 'primaryKey')] = snapshot.id;
+      hash[this.primaryKey] = snapshot.id;
     }
-    this._super(hash, typeClass, snapshot, options);
-  },
+    super.serializeIntoHash(hash, typeClass, snapshot, options);
+  }
 
   serializeAttribute(snapshot, json, key, attribute) {
     let type = attribute.type;
@@ -38,7 +40,7 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
 
       // if provided, use the mapping provided by `attrs` in
       // the serializer
-      let payloadKey =  this._getMappedKey(key, snapshot.type);
+      let payloadKey = this._getMappedKey(key, snapshot.type);
 
       if (payloadKey === key && this.keyForAttribute) {
         payloadKey = this.keyForAttribute(key);
@@ -46,10 +48,10 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
 
       json[payloadKey] = typeof value !== 'undefined' ? value : null;
     }
-  },
+  }
 
   serializeBelongsTo(snapshot, json, relationship) {
-    let {key, kind, options} = relationship;
+    let { key, kind, options } = relationship;
     let embeddedSnapshot = snapshot.belongsTo(key);
     if (options.async) {
       let serializedKey = this.keyForRelationship(key, kind, options);
@@ -65,17 +67,17 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     } else {
       this._serializeEmbeddedBelongsTo(snapshot, json, relationship);
     }
-  },
+  }
 
   serializeHasMany(snapshot, json, relationship) {
-    let {key, kind, options} = relationship;
+    let { key, kind, options } = relationship;
     if (options.async) {
       let serializedKey = this.keyForRelationship(key, kind, options);
       json[serializedKey] = snapshot.hasMany(key, { ids: true });
     } else {
       this._serializeEmbeddedHasMany(snapshot, json, relationship);
     }
-  },
+  }
 
   normalizeResponse(store, primaryModelClass, payload, id, requestType) {
     let data = payload['data'];
@@ -87,21 +89,32 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
       root = data[pluralize(type)];
     }
 
-    assert('The root of the result must be the model class name or the plural model class name', typeOf(root) !== 'undefined');
+    assert(
+      'The root of the result must be the model class name or the plural model class name',
+      typeOf(root) !== 'undefined'
+    );
 
-    if (meta) { root['meta'] = meta; }
+    if (meta) {
+      root['meta'] = meta;
+    }
 
-    return this._super(store, primaryModelClass, root, id, requestType);
-  },
+    return super.normalizeResponse(
+      store,
+      primaryModelClass,
+      root,
+      id,
+      requestType
+    );
+  }
 
   extractRelationships(modelClass, resourceHash) {
     let relationships = {};
 
-    modelClass.eachRelationship((key, {kind, type, options}) => {
+    modelClass.eachRelationship((key, { kind, type, options }) => {
       let relationship = null;
       let relationshipKey = this.keyForRelationship(key, kind, options);
 
-      if (resourceHash.hasOwnProperty(relationshipKey)) {
+      if (Object.prototype.hasOwnProperty.call(resourceHash, relationshipKey)) {
         let data = null;
         let relationshipHash = resourceHash[relationshipKey];
         if (kind === 'belongsTo') {
@@ -119,7 +132,10 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
       }
 
       let linkKey = this.keyForLink(key, kind);
-      if (resourceHash.links && resourceHash.links.hasOwnProperty(linkKey)) {
+      if (
+        resourceHash.links &&
+        Object.prototype.hasOwnProperty.call(resourceHash.links, linkKey)
+      ) {
         let related = resourceHash.links[linkKey];
         relationship = relationship || {};
         relationship.links = { related };
@@ -131,25 +147,25 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
     });
 
     return relationships;
-  },
+  }
 
   _extractEmbeddedRecords(serializer, store, typeClass, partial) {
     typeClass.eachRelationship((key, relationship) => {
       if (!relationship.options.async) {
-        if (relationship.kind === "hasMany") {
+        if (relationship.kind === 'hasMany') {
           this._extractEmbeddedHasMany(store, key, partial, relationship);
         }
-        if (relationship.kind === "belongsTo") {
+        if (relationship.kind === 'belongsTo') {
           this._extractEmbeddedBelongsTo(store, key, partial, relationship);
         }
       }
     });
     return partial;
-  },
+  }
 
   keyForAttribute(key) {
     return this.normalizeCase(key);
-  },
+  }
 
   keyForRelationship(key, kind, options) {
     if (options && options.async) {
@@ -159,4 +175,4 @@ export default DS.JSONSerializer.extend(DS.EmbeddedRecordsMixin, {
       return this.normalizeCase(key);
     }
   }
-});
+}

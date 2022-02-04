@@ -1,19 +1,20 @@
-import { get } from '@ember/object';
-import $ from 'jquery';
 import { join } from '@ember/runloop';
 import { Promise as EmberPromise } from 'rsvp';
 import { camelize } from '@ember/string';
-import DS from 'ember-data';
+import Adapter from '@ember-data/adapter';
+import { InvalidError } from '@ember-data/adapter/error';
 import Compiler from './compiler';
-import request from 'ember-ajax/request';
+import { inject as service } from '@ember/service';
 import { pluralize } from 'ember-inflector';
 
-export default DS.Adapter.extend({
-  endpoint: null,
-  httpMethod: 'GET',
-  param: 'query',
-  defaultSerializer: '-graphql',
-  coalesceFindRequests: false,
+export default class GraphqlAdapter extends Adapter {
+  @service fetch;
+
+  endpoint = null;
+  httpMethod = 'GET';
+  param = 'query';
+  defaultSerializer = '-graphql';
+  coalesceFindRequests = false;
 
   /**
     This function controls the normalization of all compound words.
@@ -22,9 +23,9 @@ export default DS.Adapter.extend({
     @param {String} string
     @return {String} string
   */
-  normalizeCase: function(string) {
+  normalizeCase(string) {
     return camelize(string);
-  },
+  }
 
   /**
     Normalizes query parameters to avoid ParseErrors on the server side.
@@ -33,7 +34,7 @@ export default DS.Adapter.extend({
     @param {Object} query
     @return {Object} normalized query
   */
-  normalizeQuery: function(query) {
+  normalizeQuery(query) {
     let normalizedQuery = {};
 
     Object.keys(query).forEach((key) => {
@@ -49,7 +50,7 @@ export default DS.Adapter.extend({
     });
 
     return normalizedQuery;
-  },
+  }
 
   /**
     Called by the store in order to fetch the JSON for a given
@@ -64,17 +65,17 @@ export default DS.Adapter.extend({
     @param {String} id
     @return {Promise} promise
   */
-  findRecord: function(store, type, id) {
+  findRecord(store, type, id) {
     let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'query',
-      'parseSelectionSet': true,
-      'rootFieldName': operationName,
-      'rootFieldQuery': { 'id': id }
+      operationName: operationName,
+      operationType: 'query',
+      parseSelectionSet: true,
+      rootFieldName: operationName,
+      rootFieldQuery: { id: id },
     });
-  },
+  }
 
   /**
     Called by the store in order to fetch a JSON array for all
@@ -88,16 +89,16 @@ export default DS.Adapter.extend({
     @param {DS.Model} type
     @return {Promise} promise
   */
-  findAll: function(store, type) {
+  findAll(store, type) {
     let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'query',
-      'parseSelectionSet': true,
-      'rootFieldName': operationName
+      operationName: operationName,
+      operationType: 'query',
+      parseSelectionSet: true,
+      rootFieldName: operationName,
     });
-  },
+  }
 
   /**
     Called by the store in order to fetch JSON for
@@ -116,17 +117,17 @@ export default DS.Adapter.extend({
     @param {Object} query
     @return {Promise} promise
   */
-  query: function(store, type, query) {
+  query(store, type, query) {
     let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'query',
-      'parseSelectionSet': true,
-      'rootFieldName': operationName,
-      'rootFieldQuery': this.normalizeQuery(query)
+      operationName: operationName,
+      operationType: 'query',
+      parseSelectionSet: true,
+      rootFieldName: operationName,
+      rootFieldQuery: this.normalizeQuery(query),
     });
-  },
+  }
 
   /**
     Called by the store in order to fetch JSON for a single record that
@@ -145,17 +146,17 @@ export default DS.Adapter.extend({
     @param {Object} query
     @return {Promise} promise
   */
-  queryRecord: function(store, type, query) {
+  queryRecord(store, type, query) {
     let operationName = this.normalizeCase(type.modelName);
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'query',
-      'parseSelectionSet': true,
-      'rootFieldName': operationName,
-      'rootFieldQuery': this.normalizeQuery(query)
+      operationName: operationName,
+      operationType: 'query',
+      parseSelectionSet: true,
+      rootFieldName: operationName,
+      rootFieldQuery: this.normalizeQuery(query),
     });
-  },
+  }
 
   /**
     Called by the store in order to fetch several records together if `coalesceFindRequests` is true
@@ -170,15 +171,15 @@ export default DS.Adapter.extend({
     let operationName = this.normalizeCase(pluralize(type.modelName));
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'query',
-      'parseSelectionSet': true,
-      'rootFieldName': operationName,
-      'rootFieldQuery': { 'ids': ids }
+      operationName: operationName,
+      operationType: 'query',
+      parseSelectionSet: true,
+      rootFieldName: operationName,
+      rootFieldQuery: { ids: ids },
     });
-  },
+  }
 
-  saveRecord: function(store, type, snapshot, options) {
+  saveRecord(store, type, snapshot, options) {
     let data = {};
     let serializer = store.serializerFor(type.modelName);
     let modelName = this.normalizeCase(type.modelName);
@@ -187,25 +188,25 @@ export default DS.Adapter.extend({
     serializer.serializeIntoHash(data, type, snapshot);
 
     let payload = { id: data['id'] };
-    Object.keys(snapshot.changedAttributes()).forEach(key => {
+    Object.keys(snapshot.changedAttributes()).forEach((key) => {
       let payloadKey = serializer.keyForAttribute(key);
       payload[payloadKey] = data[payloadKey];
     });
 
-    snapshot.eachRelationship((key, {kind, options}) => {
+    snapshot.eachRelationship((key, { kind, options }) => {
       let payloadKey = serializer.keyForRelationship(key, kind, options);
       payload[payloadKey] = data[payloadKey];
     });
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'mutation',
-      'parseSelectionSet': true,
-      'rootFieldAlias': modelName,
-      'rootFieldName': operationName,
-      'rootFieldQuery': payload
+      operationName: operationName,
+      operationType: 'mutation',
+      parseSelectionSet: true,
+      rootFieldAlias: modelName,
+      rootFieldName: operationName,
+      rootFieldQuery: payload,
     });
-  },
+  }
 
   /**
     Called by the store when a newly created record is
@@ -217,9 +218,9 @@ export default DS.Adapter.extend({
     @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  createRecord: function(store, type, snapshot) {
+  createRecord(store, type, snapshot) {
     return this.saveRecord(store, type, snapshot, { action: 'Create' });
-  },
+  }
 
   /**
     Called by the store when an existing record is saved
@@ -233,9 +234,9 @@ export default DS.Adapter.extend({
     @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  updateRecord: function(store, type, snapshot) {
+  updateRecord(store, type, snapshot) {
     return this.saveRecord(store, type, snapshot, { action: 'Update' });
-  },
+  }
 
   /**
     Called by the store when a record is deleted.
@@ -248,20 +249,20 @@ export default DS.Adapter.extend({
     @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  deleteRecord: function(store, type, snapshot) {
+  deleteRecord(store, type, snapshot) {
     let data = this.serialize(snapshot, { includeId: true });
     let modelName = this.normalizeCase(type.modelName);
     let operationName = this.normalizeCase(`${modelName}Delete`);
 
     return this.request(store, type, {
-      'operationName': operationName,
-      'operationType': 'mutation',
-      'parseSelectionSet': false,
-      'rootFieldAlias': modelName,
-      'rootFieldName': operationName,
-      'rootFieldQuery': { 'id': data.id },
+      operationName: operationName,
+      operationType: 'mutation',
+      parseSelectionSet: false,
+      rootFieldAlias: modelName,
+      rootFieldName: operationName,
+      rootFieldQuery: { id: data.id },
     });
-  },
+  }
 
   /**
     @method compile
@@ -271,10 +272,10 @@ export default DS.Adapter.extend({
     @params {Object} options
     @return {String} result
   */
-  compile: function(store, type, options) {
+  compile(store, type, options) {
     options['normalizeCaseFn'] = this.normalizeCase;
     return Compiler.compile(type, store, options);
-  },
+  }
 
   /**
     @method request
@@ -284,13 +285,13 @@ export default DS.Adapter.extend({
     @params {Object} options
     @return {Promise} promise
   */
-  request: function(store, type, options) {
+  request(store, type, options) {
     let compiledQuery = this.compile(store, type, options);
     let url = this.endpoint;
     let ajaxOpts = this.ajaxOptions({ query: compiledQuery });
 
     return this.ajax(url, ajaxOpts);
-  },
+  }
 
   /**
     @method ajax
@@ -298,23 +299,26 @@ export default DS.Adapter.extend({
     @params {Object} options
     @return {Promise} promise
   */
-  ajax: function(url, options) {
+  ajax(url, options) {
     let adapter = this;
 
     return new EmberPromise((resolve, reject) => {
-      return request(url, options).then(response => {
-        const adapterResponse = adapter.handleResponse(null, null, response);
+      return this.fetch.request(url, options).then(
+        (response) => {
+          const adapterResponse = adapter.handleResponse(null, null, response);
 
-        if (response && adapterResponse.isAdapterError) {
-          join(null, reject, response);
-        } else {
-          join(null, resolve, response);
+          if (response && adapterResponse.isAdapterError) {
+            join(null, reject, response);
+          } else {
+            join(null, resolve, response);
+          }
+        },
+        (error) => {
+          join(null, reject, error);
         }
-      }, error => {
-        join(null, reject, error);
-      });
+      );
     });
-  },
+  }
 
   /**
     @method parseErrorResponse
@@ -326,13 +330,13 @@ export default DS.Adapter.extend({
     var json = responseText;
 
     try {
-      json = $.parseJSON(responseText);
+      json = JSON.parse(responseText);
     } catch (e) {
       // empty
     }
 
     return json;
-  },
+  }
 
   /**
     @method ajaxOptions
@@ -340,23 +344,25 @@ export default DS.Adapter.extend({
     @param {String} url
     @return {Object}
   */
-  ajaxOptions: function(data) {
-    let opts =  {
-      'dataType': 'json',
-      'data': data,
-      'type': this.httpMethod,
-      'context': this
+  ajaxOptions(data) {
+    let opts = {
+      dataType: 'json',
+      data: data,
+      type: this.httpMethod,
+      context: this,
     };
 
-    let headers = get(this, 'headers');
+    let headers = this.headers;
     if (headers !== undefined) {
       opts.beforeSend = function (xhr) {
-        Object.keys(headers).forEach((key) =>  xhr.setRequestHeader(key, headers[key]));
+        Object.keys(headers).forEach((key) =>
+          xhr.setRequestHeader(key, headers[key])
+        );
       };
     }
 
     return opts;
-  },
+  }
 
   /**
     Takes an ajax response, and returns the json payload or an error.
@@ -384,11 +390,11 @@ export default DS.Adapter.extend({
     @param  {Object} options
     @return {Object | DS.AdapterError} response
   */
-  handleResponse: function(status, headers, payload) {
+  handleResponse(status, headers, payload) {
     if (payload['errors']) {
-      return new DS.InvalidError(payload['errors']);
+      return new InvalidError(payload['errors']);
     } else {
       return payload;
     }
   }
-});
+}
