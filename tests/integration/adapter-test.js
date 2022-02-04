@@ -1,690 +1,706 @@
 import { underscore } from '@ember/string';
-import { copy } from '@ember/object/internals';
 import RSVP from 'rsvp';
-import { run } from '@ember/runloop';
-import setupStore from 'dummy/tests/helpers/store';
-import DS from 'ember-data';
+import Model, { attr, belongsTo, hasMany } from '@ember-data/model';
+import { setupTest } from 'ember-qunit';
 import { module, test } from 'qunit';
-import { Adapter, Serializer } from 'ember-graphql-adapter';
+import GraphQLAdapter, { Serializer } from 'ember-graphql-adapter';
 
-var env, store, adapter;
-var passedUrl, passedQuery;
-var Author, Profile, Post, Comment, PostCategory;
+let mockResponse, passedUrl, passedQuery;
 
-module("integration/adapter - GraphQL adapter", {
-  beforeEach() {
-    Post = DS.Model.extend({
-      name: DS.attr('string')
-    });
+class Post extends Model {
+  @attr('string') name;
+}
 
-    Comment = DS.Model.extend({
-      name: DS.attr('string')
-    });
+class Comment extends Model {
+  @attr('string') name;
+}
 
-    Author = DS.Model.extend({
-      name: DS.attr('string')
-    });
+class Author extends Model {
+  @attr('string') name;
+}
 
-    Profile = DS.Model.extend({
-      age: DS.attr('number')
-    });
+class Profile extends Model {
+  @attr('number') age;
+}
 
-    PostCategory = DS.Model.extend({
-      name: DS.attr('string')
-    });
+class PostCategory extends Model {
+  @attr('string') name;
+}
 
-    env = setupStore({
-      adapter: Adapter.extend({ endpoint: '/graph' }),
-      post: Post,
-      author: Author,
-      profile: Profile,
-      comment: Comment,
-      postCategory: PostCategory
-    });
+class ApplicationAdapter extends GraphQLAdapter {
+  endpoint = '/graph';
 
-    store = env.store;
-    adapter = env.adapter;
-  },
-
-  afterEach() {
-    run(env.store, 'destroy');
-  }
-});
-
-function ajaxResponse(value) {
-  adapter.ajax = function(url, { data }) {
+  ajax(url, { data }) {
     passedUrl = url;
     passedQuery = data.query;
 
-    return run(RSVP, 'resolve', copy(value, true));
-  };
+    return RSVP.resolve(mockResponse);
+  }
 }
 
-test('findRecord - finds a single record', function(assert) {
-  assert.expect(4);
+module('integration/adapter - GraphQL adapter', function (hooks) {
+  setupTest(hooks);
 
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks'
-      }
-    }
+  hooks.beforeEach(function () {
+    this.owner.register('model:post', Post);
+    this.owner.register('model:comment', Comment);
+    this.owner.register('model:author', Author);
+    this.owner.register('model:profile', Profile);
+    this.owner.register('model:post-category', PostCategory);
+
+    this.owner.register('serializer:application', Serializer);
+    this.owner.register('adapter:application', ApplicationAdapter);
+
+    this.store = this.owner.lookup('service:store');
+    this.adapter = this.store.adapterFor('post');
   });
 
-  run(function() {
-    store.findRecord('post', 1).then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post { post(id: "1") { id name } }');
+  function ajaxResponse(value) {
+    mockResponse = value;
+  }
 
-      assert.equal(post.get('id'), '1');
-      assert.equal(post.get('name'), 'Ember.js rocks');
+  test('findRecord - finds a single record', async function (assert) {
+    assert.expect(4);
+
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+        },
+      },
     });
-  });
-});
 
-test('findAll - finds all records', function(assert) {
-  assert.expect(4);
+    let post = await this.store.findRecord('post', 1);
 
-  ajaxResponse({
-    data: {
-      posts: [{
-        id: '1',
-        name: 'Ember.js rocks'
-      }]
-    }
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(passedQuery, 'query post { post(id: "1") { id name } }');
+
+    assert.strictEqual(post.id, '1');
+    assert.strictEqual(post.name, 'Ember.js rocks');
   });
 
-  run(function() {
-    store.findAll('post').then(function(posts) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query posts { posts { id name } }');
+  test('findAll - finds all records', async function (assert) {
+    assert.expect(4);
 
-      assert.equal(posts.get('length'), 1);
-      assert.equal(posts.get('firstObject.name'), 'Ember.js rocks');
+    ajaxResponse({
+      data: {
+        posts: [
+          {
+            id: '1',
+            name: 'Ember.js rocks',
+          },
+        ],
+      },
     });
-  });
-});
 
-test('query - finds all records matching query', function(assert) {
-  assert.expect(4);
+    let posts = await this.store.findAll('post');
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(passedQuery, 'query posts { posts { id name } }');
 
-  ajaxResponse({
-    data: {
-      posts: [{
-        id: '1',
-        name: 'Ember.js rocks'
-      }]
-    }
+    assert.strictEqual(posts.length, 1);
+    assert.strictEqual(posts.firstObject.name, 'Ember.js rocks');
   });
 
-  run(function() {
-    store.query('post', { id: 1 }).then(function(posts) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query posts { posts(id: 1) { id name } }');
+  test('query - finds all records matching query', async function (assert) {
+    assert.expect(4);
 
-      assert.equal(posts.get('length'), 1);
-      assert.equal(posts.get('firstObject.name'), 'Ember.js rocks');
+    ajaxResponse({
+      data: {
+        posts: [
+          {
+            id: '1',
+            name: 'Ember.js rocks',
+          },
+        ],
+      },
     });
-  });
-});
 
-test('queryRecord - finds a single record matching a query', function(assert) {
-  assert.expect(3);
+    let posts = await this.store.query('post', { id: 1 });
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(passedQuery, 'query posts { posts(id: 1) { id name } }');
 
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks'
-      }
-    }
+    assert.strictEqual(posts.length, 1);
+    assert.strictEqual(posts.firstObject.name, 'Ember.js rocks');
   });
 
-  run(function() {
-    store.queryRecord('post', { name: 'Ember.js rocks' }).then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post { post(name: "Ember.js rocks") { id name } }');
+  test('queryRecord - finds a single record matching a query', async function (assert) {
+    assert.expect(3);
 
-      assert.equal(post.get('name'), 'Ember.js rocks');
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+        },
+      },
     });
+
+    let post = await this.store.queryRecord('post', { name: 'Ember.js rocks' });
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query post { post(name: "Ember.js rocks") { id name } }'
+    );
+
+    assert.strictEqual(post.name, 'Ember.js rocks');
   });
-});
 
-test('findMany - finds many records coalescing in a single request', function(assert) {
-  assert.expect(3);
+  test('findMany - finds many records coalescing in a single request', async function (assert) {
+    assert.expect(3);
 
-  Post.reopen({ comments: DS.hasMany('comment', { async: true }) });
-  adapter.coalesceFindRequests = true;
+    class PostWithComments extends Post {
+      @hasMany('comment', { async: true }) comments;
+    }
+    this.owner.register('model:post', PostWithComments);
+    this.adapter.coalesceFindRequests = true;
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'post',
         id: '1',
         attributes: {
-          name: "Rails is omakase"
+          name: 'Rails is omakase',
         },
         relationships: {
           comments: {
             data: [
               { type: 'comment', id: '1' },
               { type: 'comment', id: '2' },
-              { type: 'comment', id: '3' }
-            ]
-          }
-        }
-      }
-    });
-  });
-
-  let post = store.peekRecord('post', 1);
-
-  ajaxResponse({
-    data: {
-      comments: [
-        { id: 1, name: "FIRST" },
-        { id: 2, name: "Rails is unagi" },
-        { id: 3, name: "What is omakase?" }
-      ]
-    }
-  });
-
-  run(function() {
-    post.get('comments').then(function(comments) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query comments { comments(ids: ["1","2","3"]) { id name } }');
-      assert.equal(comments.length, 3);
-    });
-  });
-});
-
-test('createRecord - creates new record', function(assert) {
-  assert.expect(3);
-
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks'
-      }
-    }
-  });
-
-  run(function() {
-    let post = store.createRecord('post', { name: 'Ember.js rocks' });
-
-    post.save().then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postCreate { post: postCreate(name: "Ember.js rocks") { id name } }');
-
-      assert.equal(post.get('name'), 'Ember.js rocks');
-    });
-  });
-});
-
-test('updateRecord - updates existing record', function(assert) {
-  assert.expect(3);
-
-  run(function() {
-    store.push({
-      data: {
-        type: 'post',
-        id: '1',
-        attributes: {
-          name: 'Rails is omakase'
-        }
-      }
-    });
-  });
-
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks'
-      }
-    }
-  });
-
-  run(function() {
-    let post = store.peekRecord('post', 1);
-
-    post.set('name', 'Ember.js rocks');
-
-    post.save().then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js rocks") { id name } }');
-
-      assert.equal(post.get('name'), 'Ember.js rocks');
-    });
-  });
-});
-
-test('deleteRecord - deletes existing record', function(assert) {
-  assert.expect(3);
-
-  run(function() {
-    store.push({
-      data: {
-        type: 'post',
-        id: '1',
-        attributes: {
-          name: 'Rails is omakase'
-        }
-      }
-    });
- });
-
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks'
-      }
-    }
-  });
-
-  run(function() {
-    let post = store.peekRecord('post', 1);
-
-    post.destroyRecord().then(function() {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postDelete { post: postDelete(id: "1") { id } }');
-
-      assert.equal(store.peekAll('post').get('length'), 0);
-    });
-  });
-});
-
-test('Synchronous relationships are included', function(assert) {
-  assert.expect(22);
-
-  Post.reopen({
-    postCategory: DS.belongsTo('postCategory', { async: false }),
-    comments: DS.hasMany('comment', { async: false }),
-    topComments: DS.hasMany('comment', { async: false })
-  });
-
-  Author.reopen({
-    posts: DS.hasMany('post', { async: false }),
-    profile: DS.belongsTo('profile', { async: false })
-  });
-
-  ajaxResponse({
-    data: {
-      author: {
-        id: '1',
-        name: 'Jeffrey Archer',
-        profile: {
-          id: '1',
-          age: 30
+              { type: 'comment', id: '3' },
+            ],
+          },
         },
-        posts: [
-          {
-            id: '1',
-            name: 'Ember.js rocks',
-            postCategory: { id: '1', name: 'Tutorials' },
-            comments: [
-              { id: '1', name: 'FIRST' }
-            ],
-            topComments: [
-              { id: '2', name: 'SECOND' }
-            ]
-          }, {
-            id: '2',
-            name: 'React has a smaller footprint than Ember.',
-            postCategory: { id: '2', name: 'Controversial' },
-            comments: [
-              { id: '3', name: 'THIRD' }
-            ],
-            topComments: [
-              { id: '4', name: 'FOURTH' }
-            ]
-          }
-        ]
-      }
-    }
-  });
-
-  run(function() {
-    store.findRecord('author', 1).then(function(author) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query author { author(id: "1") { id name posts { id name postCategory { id name } comments { id name } topComments { id name } } profile { id age } } }');
-
-      assert.equal(author.get('id'), '1');
-      assert.equal(author.get('name'), 'Jeffrey Archer');
-
-      assert.equal(author.get('profile.id'), '1');
-      assert.equal(author.get('profile.age'), 30);
-
-      assert.equal(author.get('posts.firstObject.id'), '1');
-      assert.equal(author.get('posts.firstObject.name'), 'Ember.js rocks');
-
-      assert.equal(author.get('posts.firstObject.postCategory.id'), '1');
-      assert.equal(author.get('posts.firstObject.postCategory.name'), 'Tutorials');
-
-      assert.equal(author.get('posts.firstObject.comments.firstObject.id'), '1');
-      assert.equal(author.get('posts.firstObject.comments.firstObject.name'), 'FIRST');
-
-      assert.equal(author.get('posts.firstObject.topComments.firstObject.id'), '2');
-      assert.equal(author.get('posts.firstObject.topComments.firstObject.name'), 'SECOND');
-
-      assert.equal(author.get('posts.lastObject.id'), '2');
-      assert.equal(author.get('posts.lastObject.name'), 'React has a smaller footprint than Ember.');
-
-      assert.equal(author.get('posts.lastObject.postCategory.id'), '2');
-      assert.equal(author.get('posts.lastObject.postCategory.name'), 'Controversial');
-
-      assert.equal(author.get('posts.lastObject.comments.firstObject.id'), '3');
-      assert.equal(author.get('posts.lastObject.comments.firstObject.name'), 'THIRD');
-
-      assert.equal(author.get('posts.lastObject.topComments.firstObject.id'), '4');
-      assert.equal(author.get('posts.lastObject.topComments.firstObject.name'), 'FOURTH');
+      },
     });
+
+    let post = this.store.peekRecord('post', 1);
+
+    ajaxResponse({
+      data: {
+        comments: [
+          { id: 1, name: 'FIRST' },
+          { id: 2, name: 'Rails is unagi' },
+          { id: 3, name: 'What is omakase?' },
+        ],
+      },
+    });
+
+    let comments = await post.get('comments');
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query comments { comments(ids: ["1","2","3"]) { id name } }'
+    );
+    assert.strictEqual(comments.length, 3);
   });
-});
 
-test('Asynchronous relationships only include ids', function(assert) {
-  assert.expect(10);
+  test('createRecord - creates new record', async function (assert) {
+    assert.expect(3);
 
-  run(function() {
-    store.push({
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+        },
+      },
+    });
+
+    let post = this.store.createRecord('post', { name: 'Ember.js rocks' });
+
+    post = await post.save();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'mutation postCreate { post: postCreate(name: "Ember.js rocks") { id name } }'
+    );
+
+    assert.strictEqual(post.name, 'Ember.js rocks');
+  });
+
+  test('updateRecord - updates existing record', async function (assert) {
+    assert.expect(3);
+
+    this.store.push({
+      data: {
+        type: 'post',
+        id: '1',
+        attributes: {
+          name: 'Rails is omakase',
+        },
+      },
+    });
+
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+        },
+      },
+    });
+
+    let post = this.store.peekRecord('post', 1);
+
+    post.name = 'Ember.js rocks';
+
+    post = await post.save();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js rocks") { id name } }'
+    );
+
+    assert.strictEqual(post.get('name'), 'Ember.js rocks');
+  });
+
+  test('deleteRecord - deletes existing record', async function (assert) {
+    assert.expect(3);
+
+    this.store.push({
+      data: {
+        type: 'post',
+        id: '1',
+        attributes: {
+          name: 'Rails is omakase',
+        },
+      },
+    });
+
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+        },
+      },
+    });
+
+    let post = this.store.peekRecord('post', 1);
+
+    await post.destroyRecord();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'mutation postDelete { post: postDelete(id: "1") { id } }'
+    );
+
+    assert.strictEqual(this.store.peekAll('post').length, 0);
+  });
+
+  test('Synchronous relationships are included', async function (assert) {
+    assert.expect(22);
+
+    class PostWithComments extends Post {
+      @belongsTo('postCategory', { async: false }) postCategory;
+      @hasMany('comment', { async: false }) comments;
+      @hasMany('comment', { async: false }) topComments;
+    }
+    this.owner.register('model:post', PostWithComments);
+
+    Author.reopen({
+      posts: hasMany('post', { async: false }),
+      profile: belongsTo('profile', { async: false }),
+    });
+
+    class AuthorWithPosts extends Author {
+      @hasMany('post', { async: false }) posts;
+      @belongsTo('profile', { async: false }) profile;
+    }
+    this.owner.register('model:author', AuthorWithPosts);
+
+    ajaxResponse({
+      data: {
+        author: {
+          id: '1',
+          name: 'Jeffrey Archer',
+          profile: {
+            id: '1',
+            age: 30,
+          },
+          posts: [
+            {
+              id: '1',
+              name: 'Ember.js rocks',
+              postCategory: { id: '1', name: 'Tutorials' },
+              comments: [{ id: '1', name: 'FIRST' }],
+              topComments: [{ id: '2', name: 'SECOND' }],
+            },
+            {
+              id: '2',
+              name: 'React has a smaller footprint than Ember.',
+              postCategory: { id: '2', name: 'Controversial' },
+              comments: [{ id: '3', name: 'THIRD' }],
+              topComments: [{ id: '4', name: 'FOURTH' }],
+            },
+          ],
+        },
+      },
+    });
+
+    let author = await this.store.findRecord('author', 1);
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query author { author(id: "1") { id name posts { id name postCategory { id name } comments { id name } topComments { id name } } profile { id age } } }'
+    );
+
+    assert.strictEqual(author.id, '1');
+    assert.strictEqual(author.name, 'Jeffrey Archer');
+
+    assert.strictEqual(author.profile.id, '1');
+    assert.strictEqual(author.profile.age, 30);
+
+    assert.strictEqual(author.posts.firstObject.id, '1');
+    assert.strictEqual(author.posts.firstObject.name, 'Ember.js rocks');
+
+    assert.strictEqual(author.posts.firstObject.postCategory.id, '1');
+    assert.strictEqual(author.posts.firstObject.postCategory.name, 'Tutorials');
+
+    assert.strictEqual(author.posts.firstObject.comments.firstObject.id, '1');
+    assert.strictEqual(
+      author.posts.firstObject.comments.firstObject.name,
+      'FIRST'
+    );
+
+    assert.strictEqual(
+      author.posts.firstObject.topComments.firstObject.id,
+      '2'
+    );
+    assert.strictEqual(
+      author.posts.firstObject.topComments.firstObject.name,
+      'SECOND'
+    );
+
+    assert.strictEqual(author.posts.lastObject.id, '2');
+    assert.strictEqual(
+      author.posts.lastObject.name,
+      'React has a smaller footprint than Ember.'
+    );
+
+    assert.strictEqual(author.posts.lastObject.postCategory.id, '2');
+    assert.strictEqual(
+      author.posts.lastObject.postCategory.name,
+      'Controversial'
+    );
+
+    assert.strictEqual(author.posts.lastObject.comments.firstObject.id, '3');
+    assert.strictEqual(
+      author.posts.lastObject.comments.firstObject.name,
+      'THIRD'
+    );
+
+    assert.strictEqual(author.posts.lastObject.topComments.firstObject.id, '4');
+    assert.strictEqual(
+      author.posts.lastObject.topComments.firstObject.name,
+      'FOURTH'
+    );
+  });
+
+  test('Asynchronous relationships only include ids', async function (assert) {
+    assert.expect(10);
+
+    this.store.push({
       data: {
         type: 'comment',
         id: '1',
         attributes: {
-          name: 'FIRST'
-        }
-      }
+          name: 'FIRST',
+        },
+      },
     });
 
-    store.push({
+    this.store.push({
       data: {
         type: 'comment',
         id: '2',
         attributes: {
-          name: 'SECOND'
-        }
-      }
+          name: 'SECOND',
+        },
+      },
     });
 
-    store.push({
+    this.store.push({
       data: {
         type: 'post-category',
         id: '1',
         attributes: {
-          name: 'Tutorials'
-        }
-      }
+          name: 'Tutorials',
+        },
+      },
     });
-  });
 
-  Post.reopen({
-    postCategory: DS.belongsTo('postCategory', { async: true }),
-    comments: DS.hasMany('comment', { async: true }),
-    topComments: DS.hasMany('comment', { async: true })
-  });
-
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js rocks',
-        postCategoryId: 1,
-        commentIds: [1],
-        topCommentIds: [2]
-      }
+    class PostWithComments extends Post {
+      @belongsTo('postCategory', { async: true }) postCategory;
+      @hasMany('comment', { async: true }) comments;
+      @hasMany('comment', { async: true }) topComments;
     }
-  });
+    this.owner.register('model:post', PostWithComments);
 
-  run(function() {
-    store.findRecord('post', 1).then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post { post(id: "1") { id name postCategoryId commentIds topCommentIds } }');
-
-      assert.equal(post.get('id'), '1');
-      assert.equal(post.get('name'), 'Ember.js rocks');
-
-      post.get('postCategory').then(function(category) {
-        assert.equal(category.get('id'), '1');
-        assert.equal(category.get('name'), 'Tutorials');
-      });
-
-      post.get('comments').then(function(comments) {
-        assert.equal(comments.get('firstObject.id'), '1');
-        assert.equal(comments.get('firstObject.name'), 'FIRST');
-      });
-
-      post.get('topComments').then(function(comments) {
-        assert.equal(comments.get('firstObject.id'), '2');
-        assert.equal(comments.get('firstObject.name'), 'SECOND');
-      });
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js rocks',
+          postCategoryId: 1,
+          commentIds: [1],
+          topCommentIds: [2],
+        },
+      },
     });
+
+    let post = await this.store.findRecord('post', 1);
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query post { post(id: "1") { id name postCategoryId commentIds topCommentIds } }'
+    );
+
+    assert.strictEqual(post.id, '1');
+    assert.strictEqual(post.name, 'Ember.js rocks');
+
+    let category = await post.get('postCategory');
+    assert.strictEqual(category.id, '1');
+    assert.strictEqual(category.name, 'Tutorials');
+
+    let comments = await post.get('comments');
+    assert.strictEqual(comments.firstObject.id, '1');
+    assert.strictEqual(comments.firstObject.name, 'FIRST');
+
+    let topComments = await post.get('topComments');
+    assert.strictEqual(topComments.firstObject.id, '2');
+    assert.strictEqual(topComments.firstObject.name, 'SECOND');
   });
-});
 
-test('Resources and attributes with multiple words are camelized', function(assert) {
-  assert.expect(5);
+  test('Resources and attributes with multiple words are camelized', async function (assert) {
+    assert.expect(5);
 
-  PostCategory.reopen({
-    postsCount: DS.attr('number')
-  });
-
-  ajaxResponse({
-    data: {
-      postCategory: {
-        id: '1',
-        name: 'Ember.js rocks',
-        postsCount: '10'
-      }
+    class PostCategoryWithCount extends PostCategory {
+      @attr('number') postsCount;
     }
-  });
+    this.owner.register('model:post-category', PostCategoryWithCount);
 
-  run(function() {
-    store.findRecord('postCategory', 1).then(function(category) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query postCategory { postCategory(id: "1") { id name postsCount } }');
-
-      assert.equal(category.get('id'), '1');
-      assert.equal(category.get('name'), 'Ember.js rocks');
-      assert.equal(category.get('postsCount'), 10);
+    ajaxResponse({
+      data: {
+        postCategory: {
+          id: '1',
+          name: 'Ember.js rocks',
+          postsCount: '10',
+        },
+      },
     });
-  });
-});
 
-test('Resources and attributes with multiple words are snake cased in times of need', function(assert) {
-  assert.expect(5);
+    let category = await this.store.findRecord('postCategory', 1);
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query postCategory { postCategory(id: "1") { id postsCount name } }'
+    );
 
-  let normalizeCaseFn = function(name) {
-    return underscore(name);
-  };
-
-  adapter.normalizeCase = normalizeCaseFn;
-
-  env.registry.register('serializer:-graphql', Serializer.extend({
-    normalizeCase: normalizeCaseFn
-  }));
-
-  PostCategory.reopen({
-    postsCount: DS.attr('number')
+    assert.strictEqual(category.id, '1');
+    assert.strictEqual(category.name, 'Ember.js rocks');
+    assert.strictEqual(category.postsCount, 10);
   });
 
-  ajaxResponse({
-    data: {
-      post_category: {
-        id: '1',
-        name: 'Tutorials',
-        posts_count: '10'
+  test('Resources and attributes with multiple words are snake cased in times of need', async function (assert) {
+    assert.expect(5);
+
+    let normalizeCaseFn = (name) => underscore(name);
+
+    this.adapter.normalizeCase = normalizeCaseFn;
+
+    this.owner.register(
+      'serializer:application',
+      class SnakeSerializer extends Serializer {
+        normalizeCase = normalizeCaseFn;
       }
+    );
+
+    class PostCategoryWithCount extends PostCategory {
+      @attr('number') postsCount;
     }
-  });
+    this.owner.register('model:post-category', PostCategoryWithCount);
 
-  run(function() {
-    store.findRecord('postCategory', 1).then(function(category) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query post_category { post_category(id: "1") { id name posts_count } }');
-
-      assert.equal(category.get('id'), '1');
-      assert.equal(category.get('name'), 'Tutorials');
-      assert.equal(category.get('postsCount'), 10);
+    ajaxResponse({
+      data: {
+        post_category: {
+          id: '1',
+          name: 'Tutorials',
+          posts_count: '10',
+        },
+      },
     });
+
+    let category = await this.store.findRecord('postCategory', 1);
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query post_category { post_category(id: "1") { id posts_count name } }'
+    );
+
+    assert.strictEqual(category.id, '1');
+    assert.strictEqual(category.name, 'Tutorials');
+    assert.strictEqual(category.postsCount, 10);
   });
-});
 
-test('Mutation names can be snake cased too', function(assert) {
-  assert.expect(4);
+  test('Mutation names can be snake cased too', async function (assert) {
+    assert.expect(4);
 
-  let normalizeCaseFn = function(name) {
-    return underscore(name);
-  };
+    let normalizeCaseFn = (name) => underscore(name);
 
-  adapter.normalizeCase = normalizeCaseFn;
+    this.adapter.normalizeCase = normalizeCaseFn;
 
-  env.registry.register('serializer:-graphql', Serializer.extend({
-    normalizeCase: normalizeCaseFn
-  }));
-
-  ajaxResponse({
-    data: {
-      post_category: {
-        id: '1',
-        name: 'Tutorials'
+    this.owner.register(
+      'serializer:application',
+      class SnakeSerializer extends Serializer {
+        normalizeCase = normalizeCaseFn;
       }
-    }
-  });
+    );
 
-  run(function() {
-    let category = store.createRecord('postCategory', { name: 'Tutorials' });
-
-    category.save().then(function(category) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, `mutation post_category_create { post_category: post_category_create(name: "Tutorials") { id name } }`);
-
-      assert.equal(category.get('id'), '1');
-      assert.equal(category.get('name'), 'Tutorials');
+    ajaxResponse({
+      data: {
+        post_category: {
+          id: '1',
+          name: 'Tutorials',
+        },
+      },
     });
+
+    let category = this.store.createRecord('postCategory', {
+      name: 'Tutorials',
+    });
+
+    category = await category.save();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      `mutation post_category_create { post_category: post_category_create(name: "Tutorials") { id name } }`
+    );
+
+    assert.strictEqual(category.id, '1');
+    assert.strictEqual(category.name, 'Tutorials');
   });
-});
 
-test('Saving a record with a quotes in a string attribute', function(assert) {
-  assert.expect(3);
+  test('Saving a record with a quotes in a string attribute', async function (assert) {
+    assert.expect(3);
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'post',
         id: '1',
         attributes: {
-          name: 'Rails is omakase'
-        }
-      }
+          name: 'Rails is omakase',
+        },
+      },
     });
-  });
 
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js is "da bomb".'
-      }
-    }
-  });
-
-  run(function() {
-    let post = store.peekRecord('post', 1);
-
-    post.set('name', 'Ember.js is "da bomb".');
-
-    post.save().then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js is \\"da bomb\\".") { id name } }');
-
-      assert.equal(post.get('name'), 'Ember.js is "da bomb".');
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js is "da bomb".',
+        },
+      },
     });
+
+    let post = this.store.peekRecord('post', 1);
+
+    post.name = 'Ember.js is "da bomb".';
+
+    post = await post.save();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js is \\"da bomb\\".") { id name } }'
+    );
+
+    assert.strictEqual(post.name, 'Ember.js is "da bomb".');
   });
-});
 
-test('Saving a record with a backslash in a string attribute', function(assert) {
-  assert.expect(3);
+  test('Saving a record with a backslash in a string attribute', async function (assert) {
+    assert.expect(3);
 
-  run(function() {
-    store.push({
+    this.store.push({
       data: {
         type: 'post',
         id: '1',
         attributes: {
-          name: 'Rails is omakase'
-        }
-      }
+          name: 'Rails is omakase',
+        },
+      },
     });
-  });
 
-  ajaxResponse({
-    data: {
-      post: {
-        id: '1',
-        name: 'Ember.js is da \\ the bomb.'
-      }
-    }
-  });
-
-  run(function() {
-    let post = store.peekRecord('post', 1);
-
-    post.set('name', 'Ember.js is da \\ the bomb.');
-
-    post.save().then(function(post) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js is da \\\\ the bomb.") { id name } }');
-
-      assert.equal(post.get('name'), 'Ember.js is da \\ the bomb.');
+    ajaxResponse({
+      data: {
+        post: {
+          id: '1',
+          name: 'Ember.js is da \\ the bomb.',
+        },
+      },
     });
+
+    let post = this.store.peekRecord('post', 1);
+
+    post.name = 'Ember.js is da \\ the bomb.';
+
+    post = await post.save();
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'mutation postUpdate { post: postUpdate(id: "1", name: "Ember.js is da \\\\ the bomb.") { id name } }'
+    );
+
+    assert.strictEqual(post.name, 'Ember.js is da \\ the bomb.');
   });
-});
 
-test('query - querying a record with double quotes in the query', function(assert) {
-  assert.expect(4);
+  test('query - querying a record with double quotes in the query', async function (assert) {
+    assert.expect(4);
 
-  ajaxResponse({
-    data: {
-      posts: [{
-        id: '1',
-        name: 'Ember.js "rocks"'
-      }]
-    }
-  });
-
-  run(function() {
-    store.query('post', { name: 'Ember.js "rocks"' }).then(function(posts) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query posts { posts(name: "Ember.js \\"rocks\\"") { id name } }');
-
-      assert.equal(posts.get('length'), 1);
-      assert.equal(posts.get('firstObject.name'), 'Ember.js "rocks"');
+    ajaxResponse({
+      data: {
+        posts: [
+          {
+            id: '1',
+            name: 'Ember.js "rocks"',
+          },
+        ],
+      },
     });
-  });
-});
 
-test('query - querying a record with backslashes in the query', function(assert) {
-  assert.expect(4);
+    let posts = await this.store.query('post', { name: 'Ember.js "rocks"' });
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query posts { posts(name: "Ember.js \\"rocks\\"") { id name } }'
+    );
 
-  ajaxResponse({
-    data: {
-      posts: [{
-        id: '1',
-        name: 'Ember.js \\ rocks'
-      }]
-    }
+    assert.strictEqual(posts.length, 1);
+    assert.strictEqual(posts.firstObject.name, 'Ember.js "rocks"');
   });
 
-  run(function() {
-    store.query('post', { name: 'Ember.js \\ rocks' }).then(function(posts) {
-      assert.equal(passedUrl, '/graph');
-      assert.equal(passedQuery, 'query posts { posts(name: "Ember.js \\\\ rocks") { id name } }');
+  test('query - querying a record with backslashes in the query', async function (assert) {
+    assert.expect(4);
 
-      assert.equal(posts.get('length'), 1);
-      assert.equal(posts.get('firstObject.name'), 'Ember.js \\ rocks');
+    ajaxResponse({
+      data: {
+        posts: [
+          {
+            id: '1',
+            name: 'Ember.js \\ rocks',
+          },
+        ],
+      },
     });
+
+    let posts = await this.store.query('post', { name: 'Ember.js \\ rocks' });
+    assert.strictEqual(passedUrl, '/graph');
+    assert.strictEqual(
+      passedQuery,
+      'query posts { posts(name: "Ember.js \\\\ rocks") { id name } }'
+    );
+
+    assert.strictEqual(posts.length, 1);
+    assert.strictEqual(posts.firstObject.name, 'Ember.js \\ rocks');
   });
 });

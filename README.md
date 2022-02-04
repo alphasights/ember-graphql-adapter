@@ -6,7 +6,7 @@
 [![Ember Observer Score](http://emberobserver.com/badges/ember-graphql-adapter.svg)](http://emberobserver.com/addons/ember-graphql-adapter)
 [![Greenkeeper badge](https://badges.greenkeeper.io/alphasights/ember-graphql-adapter.svg)](https://greenkeeper.io/)
 
-A  Ember CLI adapter for using GraphQL with Ember Data.
+A Ember CLI adapter for using GraphQL with Ember Data.
 
 ## Installation
 
@@ -20,9 +20,9 @@ Create your adapter first
 // app/adapters/post.js
 import GraphQLAdapter from 'ember-graphql-adapter';
 
-export default GraphQLAdapter.extend({
-  endpoint: 'http://localhost:3000/graph'
-});
+export default class PostAdapter extends GraphQLAdapter {
+  endpoint = 'http://localhost:3000/graph';
+}
 ```
 
 Now define your serializer
@@ -31,18 +31,18 @@ Now define your serializer
 // app/serializers/post.js
 import { Serializer } from 'ember-graphql-adapter';
 
-export default Serializer.extend({});
+export default class PostSerializer extends Serializer {}
 ```
 
 And you're done!
 
 ## Features
 
-* Queries and mutations are automatically generated for you
-* Field aliases are supported
-* Belongs to relationships are fully supported
-* Has many relationships are fully supported
-* Async relationships and request coalescing is supported with `coalesceFindRequests: true`
+- Queries and mutations are automatically generated for you
+- Field aliases are supported
+- Belongs to relationships are fully supported
+- Has many relationships are fully supported
+- Async relationships and request coalescing is supported with `coalesceFindRequests = true`
 
 ## Rails Example
 
@@ -141,17 +141,17 @@ And that's it!
 
 ### Installation
 
-* `git clone https://github.com/alphasights/ember-graphql-adapter.git`
-* `yarn install`
+- `git clone https://github.com/alphasights/ember-graphql-adapter.git`
+- `yarn install`
 
 ### Running
 
-* `yarn start`
+- `yarn start`
 
 ### Running Tests
 
-* `yarn run ember test -- --server`
+- `yarn run ember test -- --server`
 
 ### Building
 
-* `yarn build`
+- `yarn build`

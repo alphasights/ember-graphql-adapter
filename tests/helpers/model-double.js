@@ -3,10 +3,12 @@ export default function ModelDouble(name, attributes, relationships) {
   this.relationships = relationships || [];
   this.modelName = name;
 
-  this.eachAttribute = (cb, binding) => { this.attributes.forEach(cb, binding); };
-  this.eachTransformedAttribute = function() {};
+  this.eachAttribute = (cb, binding) => {
+    this.attributes.forEach(cb, binding);
+  };
+  this.eachTransformedAttribute = function () {};
   this.eachRelationship = (cb) => {
-    this.relationships.forEach(function([relName, relationship]) {
+    this.relationships.forEach(function ([relName, relationship]) {
       cb(relName, relationship);
     });
   };
